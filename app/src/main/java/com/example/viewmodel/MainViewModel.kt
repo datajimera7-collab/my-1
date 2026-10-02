@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -347,187 +348,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        // Real-time watcher for Admin Balance Updates & 10% Referral Withdraw Bonuses -> notify User App immediately
+        // Real-time watcher for DataStore changes (Transactions, Payouts, Tasks, Posts, Support, Remote Updates)
+        // Dispatches through centralized NotificationChannels.checkAndDispatchAdminNotifications with strict deduplication
         viewModelScope.launch {
-            dataStoreManager.transactionsFlow.collectLatest { txList ->
-                if (com.example.BuildConfig.APP_ROLE != "ADMIN") {
-                    val notified = dataStoreManager.notifiedItemIdsFlow.first()
-                    val newAdminTx = txList.filter { tx ->
-                        (tx.id.startsWith("admin_coin_") ||
-                            tx.id.startsWith("ref_withdraw_bonus_") ||
-                            tx.title.contains("Admin Balance Update") ||
-                            tx.title.contains("Referral Withdraw Bonus")) &&
-                                !notified.contains(tx.id)
-                    }
-                    if (newAdminTx.isNotEmpty()) {
-                        dataStoreManager.markItemsNotified(newAdminTx.map { it.id }.toSet())
-                        val newest = newAdminTx.first()
-                        val sign = if (newest.coins >= 0) "+${newest.coins}" else "${newest.coins}"
-                        if (newest.id.startsWith("ref_withdraw_bonus_") || newest.title.contains("Referral Withdraw Bonus")) {
-                            com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                                context = getApplication(),
-                                title = "🤝 Referral Bonus ($sign Coins)",
-                                body = newest.title
-                            )
-                        } else {
-                            com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                                context = getApplication(),
-                                title = "🪙 Wallet Updated ($sign Coins)",
-                                body = "Your wallet balance has been updated."
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Real-time watcher for Payout Status transitions (APPROVED / COMPLETED / REJECTED) -> notify User App
-        viewModelScope.launch {
-            dataStoreManager.payoutRequestsFlow.collectLatest { payouts ->
-                if (com.example.BuildConfig.APP_ROLE != "ADMIN") {
-                    val currentEmail = currentUser.value?.email ?: return@collectLatest
-                    val notified = dataStoreManager.notifiedItemIdsFlow.first()
-                    for (req in payouts) {
-                        if (!req.userEmail.equals(currentEmail, ignoreCase = true)) continue
-                        if (req.status != com.example.data.PayoutStatus.PENDING) {
-                            val statusNotifyKey = "payout_${req.id}_${req.status.name}"
-                            if (!notified.contains(statusNotifyKey)) {
-                                dataStoreManager.markItemsNotified(setOf(statusNotifyKey))
-                                val safeCoins = if (req.amountCoins > 0) req.amountCoins else (req.amountInr * 100).toInt()
-                                val inrStr = String.format(java.util.Locale.US, "%.2f", req.amountInr)
-                                when (req.status) {
-                                    com.example.data.PayoutStatus.APPROVED -> {
-                                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                                            context = getApplication(),
-                                            title = "✅ Withdrawal Approved (₹$inrStr)",
-                                            body = "Your ₹$inrStr payout via ${req.method} is approved and processing."
-                                        )
-                                    }
-                                    com.example.data.PayoutStatus.COMPLETED -> {
-                                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                                            context = getApplication(),
-                                            title = "🎉 Payment Sent! ₹$inrStr",
-                                            body = "₹$inrStr ($safeCoins Coins) has been sent to ${req.method} (${req.destination})."
-                                        )
-                                    }
-                                    com.example.data.PayoutStatus.REJECTED -> {
-                                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                                            context = getApplication(),
-                                            title = "❌ Withdrawal Refunded (+$safeCoins Coins)",
-                                            body = "$safeCoins Coins have been returned to your wallet."
-                                        )
-                                    }
-                                    else -> {}
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Real-time watcher for newly added Admin Tasks -> trigger instant User App notification ONLY on User App
-        viewModelScope.launch {
-            var isInitialTaskBaselineLoaded = false
-            val defaultTaskIds = setOf("default_rick", "default_android15", "default_kotlin_course", "default_lofi_live")
-            dataStoreManager.videoTasksFlow.collectLatest { tasks ->
-                if (com.example.BuildConfig.APP_ROLE != "ADMIN") {
-                    val notified = dataStoreManager.notifiedItemIdsFlow.first()
-                    if (!isInitialTaskBaselineLoaded && notified.isEmpty()) {
-                        isInitialTaskBaselineLoaded = true
-                        dataStoreManager.markItemsNotified(tasks.map { it.id }.toSet())
-                        return@collectLatest
-                    }
-                    isInitialTaskBaselineLoaded = true
-                    val newlyAdded = tasks.filter { t ->
-                        !defaultTaskIds.contains(t.id) && !notified.contains(t.id)
-                    }
-                    if (newlyAdded.isNotEmpty()) {
-                        dataStoreManager.markItemsNotified(newlyAdded.map { it.id }.toSet())
-                        val newest = newlyAdded.first()
-                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                            context = getApplication(),
-                            title = "🎬 New Video Task (+${newest.rewardCoins} Coins)",
-                            body = newest.title
-                        )
-                    }
-                }
-            }
-        }
-
-        // Real-time watcher for newly added Admin Posts / Banners / Alerts -> trigger instant User App notification ONLY on User App
-        viewModelScope.launch {
-            var isInitialPostBaselineLoaded = false
-            val defaultPostIds = setOf("default_welcome_banner")
-            dataStoreManager.adminPostsFlow.collectLatest { posts ->
-                if (com.example.BuildConfig.APP_ROLE != "ADMIN") {
-                    val notified = dataStoreManager.notifiedItemIdsFlow.first()
-                    if (!isInitialPostBaselineLoaded && notified.isEmpty()) {
-                        isInitialPostBaselineLoaded = true
-                        dataStoreManager.markItemsNotified(posts.map { it.id }.toSet())
-                        return@collectLatest
-                    }
-                    isInitialPostBaselineLoaded = true
-                    val newlyAdded = posts.filter { p ->
-                        !defaultPostIds.contains(p.id) && !notified.contains(p.id)
-                    }
-                    if (newlyAdded.isNotEmpty()) {
-                        dataStoreManager.markItemsNotified(newlyAdded.map { it.id }.toSet())
-                        val newest = newlyAdded.first()
-                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                            context = getApplication(),
-                            title = newest.title.ifBlank { "🔔 New Update" },
-                            body = newest.message.ifBlank { "Tap to open the app." }
-                        )
-                    }
-                }
-            }
-        }
-
-        // Real-time watcher for incoming Support Chat replies
-        viewModelScope.launch {
-            dataStoreManager.supportMessagesFlow.collectLatest { msgs ->
-                val isAdminApp = com.example.BuildConfig.APP_ROLE == "ADMIN"
-                val notified = dataStoreManager.notifiedItemIdsFlow.first()
-                if (isAdminApp) {
-                    val newIncoming = msgs.filter { m ->
-                        m.senderRole == "USER" && !notified.contains(m.id)
-                    }
-                    if (newIncoming.isNotEmpty()) {
-                        dataStoreManager.markItemsNotified(newIncoming.map { it.id }.toSet())
-                        val latest = newIncoming.last()
-                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                            context = getApplication(),
-                            title = "💬 Support Query from ${latest.userName} (${latest.userId})",
-                            body = latest.message
-                        )
-                    }
-                } else {
-                    val myEmail = dataStoreManager.currentUserEmailFlow.first()?.lowercase() ?: currentUser.value?.email?.lowercase() ?: "guest@watchearn.com"
-                    val newReplies = msgs.filter { m ->
-                        m.senderRole == "ADMIN" && m.userEmail.equals(myEmail, ignoreCase = true) && !notified.contains(m.id)
-                    }
-                    if (newReplies.isNotEmpty()) {
-                        dataStoreManager.markItemsNotified(newReplies.map { it.id }.toSet())
-                        val latest = newReplies.last()
-                        com.example.service.NotificationChannels.sendAdminUpdateNotification(
-                            context = getApplication(),
-                            title = "💬 Support Reply",
-                            body = latest.message
-                        )
-                    }
-                }
-            }
-        }
-
-        // Centralized watcher for ALL Admin Updates (Pinned/Updated tasks, Pinned posts, Payout status, App APK updates)
-        viewModelScope.launch {
-            dataStoreManager.remoteAppUpdateFlow.collectLatest {
-                com.example.service.NotificationChannels.checkAndDispatchAdminNotifications(
-                    context = getApplication(),
-                    dataStoreManager = dataStoreManager
+            kotlinx.coroutines.flow.combine(
+                listOf(
+                    dataStoreManager.transactionsFlow,
+                    dataStoreManager.payoutRequestsFlow,
+                    dataStoreManager.videoTasksFlow,
+                    dataStoreManager.adminPostsFlow,
+                    dataStoreManager.supportMessagesFlow,
+                    dataStoreManager.remoteAppUpdateFlow
                 )
-            }
+            ) { _ -> Unit }
+                .debounce(500L)
+                .collectLatest {
+                    com.example.service.NotificationChannels.checkAndDispatchAdminNotifications(
+                        context = getApplication(),
+                        dataStoreManager = dataStoreManager
+                    )
+                }
         }
     }
 

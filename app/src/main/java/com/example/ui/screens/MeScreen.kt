@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,19 +30,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.SupportAgent
-import com.example.data.generateSixDigitReferralCode
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -54,14 +61,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -71,6 +77,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -78,20 +86,30 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.generateSixDigitReferralCode
 import com.example.ui.components.AdminPostsBannerSection
+import com.example.ui.components.KingoLogoBadge
 import com.example.ui.components.SupportChatDialog
 import com.example.ui.theme.AmberDark
 import com.example.ui.theme.AmberPrimary
+import com.example.ui.theme.Slate700
 import com.example.ui.theme.Slate800
 import com.example.ui.theme.Slate900
 import com.example.ui.theme.SuccessGreen
 import com.example.viewmodel.AppScreen
 import com.example.viewmodel.MainViewModel
+import java.util.Locale
 
+private val DarkMeBg = Color(0xFF090D16)
+private val CardSurfaceDark = Color(0xFF111827)
+private val GoldAccent = Color(0xFFFFB800)
+private val EmeraldAccent = Color(0xFF10B981)
 private val PrimaryBlue = Color(0xFF3B82F6)
+private val IndigoAccent = Color(0xFF6366F1)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +128,7 @@ fun MeScreen(
     val transactions by viewModel.transactions.collectAsState()
     val supportMessages by viewModel.supportMessages.collectAsState()
     val appDownloadUrl by viewModel.appDownloadUrl.collectAsState()
+    val cloudStatus by viewModel.cloudServerStatus.collectAsState()
 
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showSupportChatDialog by remember { mutableStateOf(false) }
@@ -155,15 +174,14 @@ fun MeScreen(
     Scaffold(
         topBar = {
             Surface(
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp,
-                shadowElevation = 2.dp
+                color = Color(0xFF0D1424),
+                shadowElevation = 4.dp
             ) {
                 Column(modifier = Modifier.fillMaxWidth().statusBarsPadding()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 11.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -171,37 +189,59 @@ fun MeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            com.example.ui.components.KingoLogoBadge(
+                            KingoLogoBadge(
                                 isAdmin = false,
-                                size = 38.dp
+                                size = 40.dp
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "ACCOUNT & VIP HUB",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .background(GoldAccent.copy(alpha = 0.18f), RoundedCornerShape(6.dp))
+                                            .border(0.8.dp, GoldAccent.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isUserLoggedIn) "VIP" else "GUEST",
+                                            color = GoldAccent,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
                                 Text(
-                                    text = "Profile & Account",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 16.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Account security, support & rewards",
+                                    text = "Affiliate Royalties • Security • 24/7 Desk",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 11.sp
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.65f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
 
+                        // VIP Help Chat Button
                         Surface(
-                            shape = RoundedCornerShape(50),
-                            color = PrimaryBlue.copy(alpha = 0.12f),
-                            border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.35f)),
+                            shape = RoundedCornerShape(12.dp),
+                            color = PrimaryBlue.copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.4f)),
                             modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
                                 .clickable { showSupportChatDialog = true }
                                 .testTag("me_top_support_btn")
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -212,21 +252,19 @@ fun MeScreen(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Help Chat",
+                                    text = "Help Desk",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
-                                    color = PrimaryBlue
+                                    color = Color.White
                                 )
                             }
                         }
                     }
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
-                        thickness = 0.8.dp
-                    )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
                 }
             }
         },
+        containerColor = DarkMeBg,
         modifier = modifier.testTag("me_screen")
     ) { innerPadding ->
         Box(
@@ -240,8 +278,8 @@ fun MeScreen(
                     .fillMaxSize()
                     .widthIn(max = 640.dp)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(top = 12.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                contentPadding = PaddingValues(top = 12.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
                     AdminPostsBannerSection(
@@ -252,43 +290,65 @@ fun MeScreen(
                     )
                 }
 
-                // Profile / Authentication Section
+                // Profile Header Section
                 if (isUserLoggedIn) {
                     item {
                         Card(
-                            shape = RoundedCornerShape(22.dp),
-                            colors = CardDefaults.cardColors(containerColor = Slate900),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(22.dp))
                                 .testTag("me_profile_header_card")
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(
-                                        Brush.linearGradient(
-                                            colors = listOf(Slate900, Slate800)
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color(0xFF1E293B),
+                                                Color(0xFF0F172A),
+                                                Color(0xFF090D16)
+                                            )
                                         )
                                     )
-                                    .padding(18.dp)
+                                    .border(
+                                        1.2.dp,
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                GoldAccent.copy(alpha = 0.6f),
+                                                PrimaryBlue.copy(alpha = 0.4f),
+                                                EmeraldAccent.copy(alpha = 0.5f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(26.dp)
+                                    )
+                                    .padding(20.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    // High-End Avatar with VIP Ring
                                     Box(
                                         modifier = Modifier
-                                            .size(54.dp)
-                                            .background(AmberPrimary, CircleShape),
+                                            .size(60.dp)
+                                            .background(
+                                                Brush.radialGradient(
+                                                    listOf(GoldAccent, AmberDark)
+                                                ),
+                                                CircleShape
+                                            )
+                                            .border(2.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+                                            .shadow(6.dp, CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Person,
                                             contentDescription = null,
                                             tint = Color.Black,
-                                            modifier = Modifier.size(30.dp)
+                                            modifier = Modifier.size(34.dp)
                                         )
                                     }
 
@@ -297,10 +357,11 @@ fun MeScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = currentUser?.name?.ifBlank { "Kingo Member" } ?: "Member",
+                                                text = currentUser?.name?.ifBlank { "VIP Member" } ?: "Member",
                                                 style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.ExtraBold,
+                                                fontWeight = FontWeight.Black,
                                                 color = Color.White,
+                                                fontSize = 17.sp,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier.weight(1f, fill = false)
@@ -308,14 +369,14 @@ fun MeScreen(
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Box(
                                                 modifier = Modifier
-                                                    .background(SuccessGreen.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                                                    .background(EmeraldAccent.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                                                    .border(0.8.dp, EmeraldAccent.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
                                                     text = "VERIFIED",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = SuccessGreen,
-                                                    fontWeight = FontWeight.ExtraBold,
+                                                    color = EmeraldAccent,
+                                                    fontWeight = FontWeight.Black,
                                                     fontSize = 9.sp
                                                 )
                                             }
@@ -324,94 +385,134 @@ fun MeScreen(
                                         Text(
                                             text = currentUser?.email ?: "",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.75f),
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 12.sp,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = "User ID: ${currentUser?.userId}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = AmberPrimary,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp
-                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        // ID Copy Strip
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color.White.copy(alpha = 0.07f),
+                                            modifier = Modifier.clickable {
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo User ID", currentUser?.userId ?: ""))
+                                                Toast.makeText(context, "User ID copied!", Toast.LENGTH_SHORT).show()
+                                            }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "ID: ${currentUser?.userId}",
+                                                    color = GoldAccent,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 11.sp
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Icon(
+                                                    imageVector = Icons.Default.ContentCopy,
+                                                    contentDescription = "Copy ID",
+                                                    tint = GoldAccent,
+                                                    modifier = Modifier.size(11.dp)
+                                                )
+                                            }
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
-                                    OutlinedButton(
-                                        onClick = {
-                                            viewModel.logout()
-                                            Toast.makeText(context, "Logged out", Toast.LENGTH_SHORT).show()
-                                        },
+                                    // Logout Button
+                                    Surface(
                                         shape = RoundedCornerShape(10.dp),
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                        color = Color.White.copy(alpha = 0.08f),
+                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                viewModel.logout()
+                                                Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+                                            }
                                     ) {
-                                        Icon(
-                                            Icons.AutoMirrored.Filled.Logout,
-                                            contentDescription = "Logout",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Logout", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.AutoMirrored.Filled.Logout,
+                                                contentDescription = "Logout",
+                                                tint = Color.White.copy(alpha = 0.8f),
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                "Logout",
+                                                fontSize = 11.sp,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 } else {
-                    // Email Sign In / Sign Up Card
+                    // Modern Executive Sign In / Sign Up Card
                     item {
                         Card(
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = CardSurfaceDark),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                             modifier = Modifier.fillMaxWidth().testTag("me_auth_card")
                         ) {
                             Column(
-                                modifier = Modifier.padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                modifier = Modifier.padding(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
                                         modifier = Modifier
-                                            .size(38.dp)
-                                            .background(AmberPrimary, CircleShape),
+                                            .size(42.dp)
+                                            .background(GoldAccent, CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(Icons.Default.Email, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
+                                        Icon(Icons.Default.Email, contentDescription = null, tint = Color.Black, modifier = Modifier.size(22.dp))
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
-                                            text = if (authTabIndex == 0) "Sign In to Kingo King" else "Create Kingo King Account",
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.titleMedium
+                                            text = if (authTabIndex == 0) "Sign In to Kingo Account" else "Create Kingo VIP Account",
+                                            fontWeight = FontWeight.Black,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = Color.White
                                         )
                                         Text(
-                                            text = "Sync coins, payouts & tasks to your email",
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = "Sync coins, watch tasks & instant UPI payouts",
+                                            fontSize = 11.sp,
+                                            color = Color.White.copy(alpha = 0.6f)
                                         )
                                     }
                                 }
 
                                 TabRow(
                                     selectedTabIndex = authTabIndex,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                    modifier = Modifier.background(Color.Transparent, RoundedCornerShape(10.dp))
+                                    containerColor = Color.White.copy(alpha = 0.05f),
+                                    modifier = Modifier.background(Color.Transparent, RoundedCornerShape(12.dp))
                                 ) {
                                     Tab(
                                         selected = authTabIndex == 0,
                                         onClick = { authTabIndex = 0; authError = null },
-                                        text = { Text("Sign In", fontWeight = FontWeight.Bold) }
+                                        text = { Text("Sign In", fontWeight = FontWeight.Bold, color = if (authTabIndex == 0) GoldAccent else Color.White.copy(alpha = 0.6f)) }
                                     )
                                     Tab(
                                         selected = authTabIndex == 1,
                                         onClick = { authTabIndex = 1; authError = null },
-                                        text = { Text("Create Account", fontWeight = FontWeight.Bold) }
+                                        text = { Text("Create Account", fontWeight = FontWeight.Bold, color = if (authTabIndex == 1) GoldAccent else Color.White.copy(alpha = 0.6f)) }
                                     )
                                 }
 
@@ -419,10 +520,16 @@ fun MeScreen(
                                     OutlinedTextField(
                                         value = nameInput,
                                         onValueChange = { nameInput = it; authError = null },
-                                        label = { Text("Your Name") },
-                                        leadingIcon = { Icon(Icons.Default.Person, null, tint = AmberPrimary) },
+                                        label = { Text("Your Full Name", color = Color.White.copy(alpha = 0.7f)) },
+                                        leadingIcon = { Icon(Icons.Default.Person, null, tint = GoldAccent) },
                                         singleLine = true,
-                                        shape = RoundedCornerShape(12.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White,
+                                            focusedBorderColor = GoldAccent,
+                                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                                        ),
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -430,30 +537,42 @@ fun MeScreen(
                                 OutlinedTextField(
                                     value = emailInput,
                                     onValueChange = { emailInput = it; authError = null },
-                                    label = { Text("Email Address") },
-                                    leadingIcon = { Icon(Icons.Default.Email, null, tint = AmberPrimary) },
+                                    label = { Text("Email Address", color = Color.White.copy(alpha = 0.7f)) },
+                                    leadingIcon = { Icon(Icons.Default.Email, null, tint = GoldAccent) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                                     singleLine = true,
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = GoldAccent,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                                    ),
                                     modifier = Modifier.fillMaxWidth().testTag("auth_email_input")
                                 )
 
                                 OutlinedTextField(
                                     value = passwordInput,
                                     onValueChange = { passwordInput = it; authError = null },
-                                    label = { Text("Password") },
-                                    leadingIcon = { Icon(Icons.Default.Lock, null, tint = AmberPrimary) },
+                                    label = { Text("Password", color = Color.White.copy(alpha = 0.7f)) },
+                                    leadingIcon = { Icon(Icons.Default.Lock, null, tint = GoldAccent) },
                                     visualTransformation = PasswordVisualTransformation(),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                     singleLine = true,
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = GoldAccent,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                                    ),
                                     modifier = Modifier.fillMaxWidth().testTag("auth_password_input")
                                 )
 
                                 authError?.let { err ->
                                     Text(
                                         text = err,
-                                        color = MaterialTheme.colorScheme.error,
+                                        color = Color(0xFFF87171),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -494,17 +613,18 @@ fun MeScreen(
                                         }
                                     },
                                     enabled = !isAuthLoading && emailInput.isNotBlank() && passwordInput.isNotBlank(),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary),
-                                    modifier = Modifier.fillMaxWidth().height(48.dp).testTag("auth_submit_btn")
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = GoldAccent),
+                                    modifier = Modifier.fillMaxWidth().height(50.dp).testTag("auth_submit_btn")
                                 ) {
                                     if (isAuthLoading) {
                                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.Black)
                                     } else {
                                         Text(
                                             text = if (authTabIndex == 0) "Sign In with Email" else "Create Account & Sign In",
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black
+                                            fontWeight = FontWeight.Black,
+                                            color = Color.Black,
+                                            fontSize = 14.sp
                                         )
                                     }
                                 }
@@ -513,17 +633,18 @@ fun MeScreen(
                     }
                 }
 
-                // Stats 3-Column Card (Coins Only!)
+                // 3-Column Live Performance Metric Strip
                 item {
                     Card(
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardSurfaceDark),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 16.dp, horizontal = 8.dp),
+                                .padding(vertical = 16.dp, horizontal = 10.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -532,15 +653,14 @@ fun MeScreen(
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(
-                                    text = "$walletBalance",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = AmberDark
+                                    text = String.format(Locale.US, "%,d", walletBalance),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = GoldAccent
                                 )
                                 Text(
-                                    text = "Total Coins",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = "Coins Balance",
+                                    color = Color.White.copy(alpha = 0.6f),
                                     fontSize = 11.sp
                                 )
                             }
@@ -548,8 +668,8 @@ fun MeScreen(
                             Box(
                                 modifier = Modifier
                                     .width(1.dp)
-                                    .height(36.dp)
-                                    .background(MaterialTheme.colorScheme.outlineVariant)
+                                    .height(32.dp)
+                                    .background(Color.White.copy(alpha = 0.1f))
                             )
 
                             Column(
@@ -558,14 +678,13 @@ fun MeScreen(
                             ) {
                                 Text(
                                     text = "$completedCount",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = SuccessGreen
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = EmeraldAccent
                                 )
                                 Text(
-                                    text = "Tasks Done",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = "Completed",
+                                    color = Color.White.copy(alpha = 0.6f),
                                     fontSize = 11.sp
                                 )
                             }
@@ -573,8 +692,8 @@ fun MeScreen(
                             Box(
                                 modifier = Modifier
                                     .width(1.dp)
-                                    .height(36.dp)
-                                    .background(MaterialTheme.colorScheme.outlineVariant)
+                                    .height(32.dp)
+                                    .background(Color.White.copy(alpha = 0.1f))
                             )
 
                             Column(
@@ -582,15 +701,14 @@ fun MeScreen(
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(
-                                    text = "${availableTasks.size}",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    text = "$referredFriendsCount",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = PrimaryBlue
                                 )
                                 Text(
-                                    text = "Active Tasks",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = "Invited Friends",
+                                    color = Color.White.copy(alpha = 0.6f),
                                     fontSize = 11.sp
                                 )
                             }
@@ -598,22 +716,15 @@ fun MeScreen(
                     }
                 }
 
-                // Refer & Earn Program Section (Shown after login in Me tab)
+                // Completely Recreated VIP Referral & Affiliate Network Hub (Institutional Quality)
                 if (isUserLoggedIn) {
                     item {
                         Card(
-                            shape = RoundedCornerShape(22.dp),
-                            colors = CardDefaults.cardColors(containerColor = Slate900),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(
-                                    width = 1.5.dp,
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(AmberPrimary, SuccessGreen.copy(alpha = 0.7f))
-                                    ),
-                                    shape = RoundedCornerShape(22.dp)
-                                )
                                 .testTag("me_refer_and_earn_card")
                         ) {
                             Column(
@@ -621,13 +732,28 @@ fun MeScreen(
                                     .fillMaxWidth()
                                     .background(
                                         Brush.verticalGradient(
-                                            colors = listOf(Slate900, Slate800)
+                                            colors = listOf(
+                                                Color(0xFF1E293B),
+                                                Color(0xFF0F172A),
+                                                Color(0xFF070B14)
+                                            )
                                         )
                                     )
-                                    .padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    .border(
+                                        1.5.dp,
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                GoldAccent.copy(alpha = 0.8f),
+                                                IndigoAccent.copy(alpha = 0.5f),
+                                                EmeraldAccent.copy(alpha = 0.7f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(26.dp)
+                                    )
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                // Header Row
+                                // Header Row with Glowing Badge
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -639,30 +765,32 @@ fun MeScreen(
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(44.dp)
-                                                .background(AmberPrimary.copy(alpha = 0.2f), CircleShape)
-                                                .border(1.dp, AmberPrimary.copy(alpha = 0.6f), CircleShape),
+                                                .size(46.dp)
+                                                .background(GoldAccent.copy(alpha = 0.18f), CircleShape)
+                                                .border(1.2.dp, GoldAccent.copy(alpha = 0.6f), CircleShape),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Default.CardGiftcard,
+                                                imageVector = Icons.Default.WorkspacePremium,
                                                 contentDescription = null,
-                                                tint = AmberPrimary,
-                                                modifier = Modifier.size(24.dp)
+                                                tint = GoldAccent,
+                                                modifier = Modifier.size(26.dp)
                                             )
                                         }
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
-                                                text = "Refer & Earn Program",
+                                                text = "VIP PARTNER PROGRAM",
                                                 style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                color = Color.White
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.White,
+                                                letterSpacing = 0.5.sp
                                             )
                                             Text(
-                                                text = "Invite friends • Earn 10% on every withdrawal",
+                                                text = "10% Lifetime Royalty on All Friend Payouts",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = Color.White.copy(alpha = 0.75f),
+                                                color = GoldAccent,
+                                                fontWeight = FontWeight.Bold,
                                                 fontSize = 11.sp
                                             )
                                         }
@@ -670,166 +798,156 @@ fun MeScreen(
 
                                     Box(
                                         modifier = Modifier
-                                            .background(SuccessGreen.copy(alpha = 0.2f), RoundedCornerShape(50))
-                                            .border(1.dp, SuccessGreen.copy(alpha = 0.5f), RoundedCornerShape(50))
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    listOf(GoldAccent, Color(0xFFEA580C))
+                                                ),
+                                                RoundedCornerShape(50)
+                                            )
                                             .padding(horizontal = 10.dp, vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = "10% BONUS",
-                                            color = SuccessGreen,
-                                            fontWeight = FontWeight.ExtraBold,
+                                            text = "10% ROYALTY",
+                                            color = Color.Black,
+                                            fontWeight = FontWeight.Black,
                                             fontSize = 10.sp
                                         )
                                     }
                                 }
 
-                                // 6-Digit Refer Key Display & Copy / Share Actions
+                                // 6-Digit Monospace Referral Code Vault Box
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-                                        .border(1.dp, AmberPrimary.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-                                        .padding(14.dp),
+                                        .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
+                                        .border(1.2.dp, GoldAccent.copy(alpha = 0.4f), RoundedCornerShape(18.dp))
+                                        .padding(16.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = "YOUR 6-DIGIT REFER KEY",
+                                        text = "YOUR EXCLUSIVE REFERRAL CODE",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White.copy(alpha = 0.7f),
+                                        color = Color.White.copy(alpha = 0.65f),
                                         fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.sp
+                                        letterSpacing = 1.2.sp
                                     )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = myReferralCode,
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = AmberPrimary,
-                                        letterSpacing = 6.sp,
-                                        modifier = Modifier.testTag("me_referral_code_text")
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
 
+                                    // Big Stylized Digits
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = Color.White.copy(alpha = 0.06f),
+                                        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f)),
+                                        modifier = Modifier.clickable {
+                                            viewModel.recordSharedReferralCode(myReferralCode)
+                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                            clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo Referral Code", myReferralCode))
+                                            Toast.makeText(context, "Referral code $myReferralCode copied!", Toast.LENGTH_SHORT).show()
+                                        }
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = myReferralCode,
+                                                fontSize = 28.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = GoldAccent,
+                                                letterSpacing = 6.sp,
+                                                modifier = Modifier.testTag("me_referral_code_text")
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Copy",
+                                                tint = GoldAccent,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(14.dp))
+
+                                    // Action Buttons Row (Share & Copy Link)
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
-                                        OutlinedButton(
-                                            onClick = {
-                                                viewModel.recordSharedReferralCode(myReferralCode)
-                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                                clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo Refer Key", myReferralCode))
-                                                Toast.makeText(context, "Refer Key $myReferralCode copied!", Toast.LENGTH_SHORT).show()
-                                            },
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(42.dp)
-                                                .testTag("me_copy_referral_btn"),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.ContentCopy,
-                                                contentDescription = "Copy Refer Key",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "Copy Key",
-                                                color = Color.White,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 12.sp
-                                            )
-                                        }
-
                                         Button(
                                             onClick = {
                                                 viewModel.recordSharedReferralCode(myReferralCode)
                                                 val cleanDownloadUrl = com.example.data.DataStoreManager.normalizeAppDownloadUrl(appDownloadUrl)
-                                                val shareMsg = "👑 Join Kingo King & earn real rewards!\n\n" +
-                                                    "📲 Download Kingo King App:\n$cleanDownloadUrl\n\n" +
-                                                    "🔑 My 6-Digit Refer Key: $myReferralCode\n\n" +
-                                                    "Sign up with my 6-Digit Refer Key ($myReferralCode) to get +50 Invite Coins + 50 First-Time Sign Up Bonus (+100 Coins instant start)!"
-                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                                clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo Invite", shareMsg))
-                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                val shareMsg = "👑 Join Kingo King & Earn Real UPI Cash by Watching Videos!\n\n" +
+                                                        "🎁 Use my 6-digit Referral Code: $myReferralCode to get +100 Welcome Bonus Coins instantly!\n\n" +
+                                                        "📲 Download Kingo King App:\n$cleanDownloadUrl\n\n" +
+                                                        "🚀 Fast 60-Sec UPI Withdrawals • 100% Free & Verified!"
+
+                                                val intent = Intent(Intent.ACTION_SEND).apply {
                                                     type = "text/plain"
                                                     putExtra(Intent.EXTRA_TEXT, shareMsg)
                                                 }
-                                                context.startActivity(Intent.createChooser(sendIntent, "Share 6-Digit Refer Key"))
+                                                context.startActivity(Intent.createChooser(intent, "Invite Friends to Kingo King"))
                                             },
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .height(42.dp)
+                                                .height(44.dp)
                                                 .testTag("me_share_referral_btn"),
                                             shape = RoundedCornerShape(12.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = AmberPrimary,
-                                                contentColor = Color.Black
-                                            )
+                                            colors = ButtonDefaults.buttonColors(containerColor = GoldAccent)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Share,
-                                                contentDescription = "Share Refer Key",
+                                                contentDescription = "Share",
                                                 tint = Color.Black,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
-                                                text = "Share Code & Link",
+                                                text = "Invite Friends",
                                                 color = Color.Black,
-                                                fontWeight = FontWeight.ExtraBold,
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 13.sp
+                                            )
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                val cleanDownloadUrl = com.example.data.DataStoreManager.normalizeAppDownloadUrl(appDownloadUrl)
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo Download Link", cleanDownloadUrl))
+                                                Toast.makeText(context, "App download link copied!", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(44.dp)
+                                                .testTag("me_open_app_download_link_btn"),
+                                            shape = RoundedCornerShape(12.dp),
+                                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Copy Link",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Copy App Link",
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp
                                             )
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    OutlinedButton(
-                                        onClick = {
-                                            val cleanDownloadUrl = com.example.data.DataStoreManager.normalizeAppDownloadUrl(appDownloadUrl)
-                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                            clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo App Download Link", cleanDownloadUrl))
-                                            Toast.makeText(context, "App Download Link copied! Opening...", Toast.LENGTH_SHORT).show()
-                                            try {
-                                                val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(cleanDownloadUrl)).apply {
-                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                }
-                                                context.startActivity(intent)
-                                            } catch (e: Exception) {
-                                                Toast.makeText(context, "Link copied: $cleanDownloadUrl", Toast.LENGTH_SHORT).show()
-                                            }
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(38.dp)
-                                            .testTag("me_open_app_download_link_btn"),
-                                        shape = RoundedCornerShape(10.dp),
-                                        border = BorderStroke(1.dp, AmberPrimary.copy(alpha = 0.6f))
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ContentCopy,
-                                            contentDescription = "Open App Download Link",
-                                            tint = AmberPrimary,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "App Download Link (Copy / Open)",
-                                            color = AmberPrimary,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp
-                                        )
-                                    }
                                 }
 
-                                // Referral Live Stats Row (Coins Only)
+                                // 2-Column Live Affiliate Stats
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                                        .padding(vertical = 10.dp, horizontal = 12.dp),
+                                        .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                        .padding(vertical = 12.dp, horizontal = 14.dp),
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -837,168 +955,146 @@ fun MeScreen(
                                         Text(
                                             text = "$referredFriendsCount",
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.ExtraBold,
+                                            fontWeight = FontWeight.Black,
                                             color = Color.White
                                         )
                                         Text(
-                                            text = "Friends Joined",
+                                            text = "Partners Joined",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = Color.White.copy(alpha = 0.7f),
+                                            color = Color.White.copy(alpha = 0.65f),
                                             fontSize = 10.sp
                                         )
                                     }
+
                                     Box(
                                         modifier = Modifier
                                             .width(1.dp)
-                                            .height(28.dp)
+                                            .height(30.dp)
                                             .background(Color.White.copy(alpha = 0.15f))
                                     )
+
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
                                             text = "+$totalReferralBonusCoins Coins",
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = SuccessGreen
+                                            fontWeight = FontWeight.Black,
+                                            color = EmeraldAccent
                                         )
                                         Text(
-                                            text = "10% Withdraw Bonus Earned",
+                                            text = "10% Royalty Credited",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = Color.White.copy(alpha = 0.7f),
+                                            color = Color.White.copy(alpha = 0.65f),
                                             fontSize = 10.sp
                                         )
                                     }
                                 }
 
-                                // Note: How Refer & Earn Works
+                                // 3-Step Clean Visual Guide (Crystal Clear & Professional - Zero confusing placeholders)
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(AmberPrimary.copy(alpha = 0.10f), RoundedCornerShape(14.dp))
-                                        .border(1.dp, AmberPrimary.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
-                                        .padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(16.dp))
+                                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                                        .padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Default.Info,
                                             contentDescription = null,
-                                            tint = AmberPrimary,
+                                            tint = GoldAccent,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Note: How Refer & Earn Works",
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = AmberPrimary,
-                                            fontSize = 12.sp
+                                            text = "How the Royalty Program Works",
+                                            fontWeight = FontWeight.Black,
+                                            color = GoldAccent,
+                                            fontSize = 13.sp
                                         )
                                     }
-                                    Text(
-                                        text = "1. Share your 6-digit Refer Key ($myReferralCode) with your friend (User B).\n" +
-                                            "2. When your friend enters your 6-digit Refer Key while signing up, they get +50 Invite Coins (+50 First-Time Sign Up Bonus = 100 Coins).\n" +
-                                            "3. Every time your friend (User B) makes a withdrawal, you (User A) automatically get 10% of their withdrawal amount added as Bonus Coins in your account!",
-                                        color = Color.White.copy(alpha = 0.88f),
-                                        fontSize = 11.sp,
-                                        lineHeight = 16.sp
-                                    )
+
+                                    // Step 1
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(22.dp)
+                                                .background(GoldAccent.copy(alpha = 0.2f), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("1", color = GoldAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text("Share Your Code", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                            Text("Send your 6-digit code or link to friends and community.", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                                        }
+                                    }
+
+                                    // Step 2
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(22.dp)
+                                                .background(PrimaryBlue.copy(alpha = 0.2f), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("2", color = PrimaryBlue, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text("Friend Gets Instant +100 Coins", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                            Text("When your friend enters your code during sign-up, they receive 100 Bonus Coins.", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                                        }
+                                    }
+
+                                    // Step 3
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(22.dp)
+                                                .background(EmeraldAccent.copy(alpha = 0.2f), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("3", color = EmeraldAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text("10% Lifetime Cash Royalty", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                            Text("Every time your invited friend withdraws cash, 10% bonus coins are instantly added to your wallet for life!", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                // Account, Support & Rewards Section
+                // Account Hub & Shortcuts
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "Account, Support & Rewards",
+                            text = "Account Hub & Quick Shortcuts",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f),
+                            fontSize = 13.sp
                         )
 
-                        // Live Support Chat Card
+                        // Wallet Shortcut Card
                         Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, PrimaryBlue.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
-                                .clickable { showSupportChatDialog = true }
-                                .testTag("me_support_chat_row")
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .background(PrimaryBlue.copy(alpha = 0.15f), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.Chat,
-                                            contentDescription = null,
-                                            tint = PrimaryBlue,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = "Live Chat Support",
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-                                            if (mySupportMessages.isNotEmpty()) {
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Box(
-                                                    modifier = Modifier
-                                                        .background(PrimaryBlue, RoundedCornerShape(50))
-                                                        .padding(horizontal = 7.dp, vertical = 2.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "${mySupportMessages.size} msg",
-                                                        color = Color.White,
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        Text(
-                                            text = "Ask questions or report issues directly to Admin",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = null,
-                                    tint = PrimaryBlue,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-
-                        // Wallet & Payout Row (Coins Only outside Wallet)
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = CardSurfaceDark),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { viewModel.navigateTo(AppScreen.WALLET) }
@@ -1017,28 +1113,29 @@ fun MeScreen(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(40.dp)
-                                            .background(AmberPrimary.copy(alpha = 0.2f), CircleShape),
+                                            .size(42.dp)
+                                            .background(GoldAccent.copy(alpha = 0.15f), CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.AccountBalanceWallet,
                                             contentDescription = null,
-                                            tint = AmberDark,
-                                            modifier = Modifier.size(20.dp)
+                                            tint = GoldAccent,
+                                            modifier = Modifier.size(22.dp)
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
-                                            text = "My Wallet & UPI Payouts",
+                                            text = "My Wallet & Payout Passbook",
                                             fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            color = Color.White,
+                                            fontSize = 14.sp
                                         )
                                         Text(
-                                            text = "Redeem earned coins directly via UPI ID",
+                                            text = "Manage balance, request UPI withdrawal & view records",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = Color.White.copy(alpha = 0.5f),
                                             fontSize = 11.sp
                                         )
                                     }
@@ -1047,17 +1144,17 @@ fun MeScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = Color.White.copy(alpha = 0.4f),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
 
-                        // Active Tasks Row
+                        // Tasks Shortcut Card
                         Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = CardSurfaceDark),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { viewModel.switchTab(AppScreen.TASKS) }
@@ -1076,15 +1173,15 @@ fun MeScreen(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(40.dp)
-                                            .background(SuccessGreen.copy(alpha = 0.2f), CircleShape),
+                                            .size(42.dp)
+                                            .background(EmeraldAccent.copy(alpha = 0.15f), CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = SuccessGreen,
-                                            modifier = Modifier.size(20.dp)
+                                            tint = EmeraldAccent,
+                                            modifier = Modifier.size(22.dp)
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -1092,12 +1189,13 @@ fun MeScreen(
                                         Text(
                                             text = "Video Watch Tasks",
                                             fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.bodyMedium
+                                            color = Color.White,
+                                            fontSize = 14.sp
                                         )
                                         Text(
                                             text = "$completedCount of ${availableTasks.size} tasks completed",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = Color.White.copy(alpha = 0.5f),
                                             fontSize = 11.sp
                                         )
                                     }
@@ -1106,18 +1204,18 @@ fun MeScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = Color.White.copy(alpha = 0.4f),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
 
-                        // Change / Reset Password Row
+                        // Change Password Card
                         if (isUserLoggedIn) {
                             Card(
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = CardDefaults.cardColors(containerColor = CardSurfaceDark),
+                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { showChangePasswordDialog = true }
@@ -1136,28 +1234,29 @@ fun MeScreen(
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(40.dp)
-                                                .background(AmberPrimary.copy(alpha = 0.2f), CircleShape),
+                                                .size(42.dp)
+                                                .background(PrimaryBlue.copy(alpha = 0.15f), CircleShape),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Lock,
                                                 contentDescription = null,
-                                                tint = AmberDark,
-                                                modifier = Modifier.size(20.dp)
+                                                tint = PrimaryBlue,
+                                                modifier = Modifier.size(22.dp)
                                             )
                                         }
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
-                                                text = "Change Account Password",
+                                                text = "Security & Change Password",
                                                 fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.bodyMedium
+                                                color = Color.White,
+                                                fontSize = 14.sp
                                             )
                                             Text(
-                                                text = "Verify via 6-digit OTP & update your password",
+                                                text = "Verify via 6-digit OTP to securely update password",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                color = Color.White.copy(alpha = 0.5f),
                                                 fontSize = 11.sp
                                             )
                                         }
@@ -1166,11 +1265,61 @@ fun MeScreen(
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        tint = Color.White.copy(alpha = 0.4f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Cloud Status & Version Information Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.03f)),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.06f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(EmeraldAccent, CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Cloud Sync & Server",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 11.sp
+                                    )
+                                }
+                                Text(
+                                    text = "v2.5.0 • Live",
+                                    color = EmeraldAccent,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                text = cloudStatus.ifBlank { "Live Synced with Google Drive Cloud" },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.45f),
+                                fontSize = 10.sp
+                            )
                         }
                     }
                 }
@@ -1180,8 +1329,8 @@ fun MeScreen(
 
     if (showSupportChatDialog) {
         SupportChatDialog(
-            title = "Live Support Chat",
-            subtitle = "ID: ${currentUser?.userId ?: "Guest"} • Direct to Admin",
+            title = "VIP Support Chat",
+            subtitle = "ID: ${currentUser?.userId ?: "Guest"} • 24/7 Priority Desk",
             messages = mySupportMessages,
             isAdminViewer = false,
             onSendMessage = { text ->
