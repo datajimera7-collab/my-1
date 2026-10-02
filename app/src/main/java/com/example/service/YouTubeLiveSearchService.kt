@@ -3425,13 +3425,10 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         wrongVideoStrikeCount = 0
                         return
                     } else if (match == com.example.data.MatchResult.MISMATCH) {
-                        wrongVideoStrikeCount++
-                        if (wrongVideoStrikeCount >= 3) {
-                            wrongVideoStrikeCount = 0
-                            WatchSessionRepository.triggerTaskIncomplete(
-                                "Task Incomplete! Aapne YouTube mein target video (\"$targetTitle\") ke bajaye doosra video (\"$pTitle\") play kar diya."
-                            )
-                        }
+                        wrongVideoStrikeCount = 0
+                        WatchSessionRepository.triggerTaskIncomplete(
+                            "Task Incomplete! Aapne YouTube mein target video (\"$targetTitle\") ke bajaye doosra video (\"$pTitle\") play kar diya."
+                        )
                         return
                     }
                 }
@@ -3451,13 +3448,10 @@ class YouTubeLiveSearchService : AccessibilityService() {
                     if (!isGenericTarget) {
                         val mediaMatch = TitleMatcher.evaluateMatch(mediaTitle, targetTitle, mediaArtist, targetAuthor)
                         if (mediaMatch == com.example.data.MatchResult.MISMATCH) {
-                            wrongVideoStrikeCount++
-                            if (wrongVideoStrikeCount >= 3) {
-                                wrongVideoStrikeCount = 0
-                                WatchSessionRepository.triggerTaskIncomplete(
-                                    "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$mediaTitle\") play kar diya."
-                                )
-                            }
+                            wrongVideoStrikeCount = 0
+                            WatchSessionRepository.triggerTaskIncomplete(
+                                "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$mediaTitle\") play kar diya."
+                            )
                             return
                         } else if (mediaMatch == com.example.data.MatchResult.MATCH) {
                             wrongVideoStrikeCount = 0
@@ -3663,14 +3657,11 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         }
                         wrongVideoStrikeCount = 0
                     } else {
-                        wrongVideoStrikeCount++
-                        if (wrongVideoStrikeCount >= 3) {
-                            val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
-                            wrongVideoStrikeCount = 0
-                            WatchSessionRepository.triggerTaskIncomplete(
-                                "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya. Sirf target title aur channel wala video play hone par hi timer chalega."
-                            )
-                        }
+                        val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
+                        wrongVideoStrikeCount = 0
+                        WatchSessionRepository.triggerTaskIncomplete(
+                            "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya. Sirf target title aur channel wala video play hone par hi timer chalega."
+                        )
                     }
                 }
             }

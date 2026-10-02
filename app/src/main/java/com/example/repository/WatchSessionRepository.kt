@@ -162,14 +162,13 @@ object WatchSessionRepository {
 
         val activeId = _activeTaskId.value
         val sixHoursMillis = 6 * 60 * 60 * 1000L
+        onRequestHideOverlay?.invoke()
         if (activeId != null) {
             onTaskIncompleteAndLocked?.invoke(activeId, cleanReason, sixHoursMillis)
         }
         val serviceCallback = onServiceTaskIncomplete
         if (serviceCallback != null) {
             serviceCallback.invoke(activeId ?: "", cleanReason, sixHoursMillis)
-        } else {
-            onRequestHideOverlay?.invoke()
         }
     }
 

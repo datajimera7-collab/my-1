@@ -114,16 +114,22 @@ class WatchTimerService : Service() {
         WatchSessionRepository.onServiceTaskIncomplete = { taskId, reason, lockDuration ->
             completionJob?.cancel()
             timerLoopJob?.cancel()
+            floatingOverlayManager.hideOverlay()
+            floatingOverlayManager.hideSearchLoadingOverlay()
             serviceScope.launch {
                 if (taskId.isNotBlank()) {
                     dataStoreManager.lockTask(taskId, lockDuration)
                 }
             }
             postRedAlertNotification("Task Incomplete!", reason)
-            floatingOverlayManager.showTaskIncompletePopup(reason) {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
+            try {
+                val openIntent = Intent(this@WatchTimerService, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }
+                startActivity(openIntent)
+            } catch (_: Exception) {}
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
         }
 
         WatchSessionRepository.onSaveProgressNeeded = { millis ->
