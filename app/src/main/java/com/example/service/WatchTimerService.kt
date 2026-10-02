@@ -122,14 +122,16 @@ class WatchTimerService : Service() {
                 }
             }
             postRedAlertNotification("Task Incomplete!", reason)
+            floatingOverlayManager.showTaskIncompletePopup(reason) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+            }
             try {
                 val openIntent = Intent(this@WatchTimerService, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
                 startActivity(openIntent)
             } catch (_: Exception) {}
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
         }
 
         WatchSessionRepository.onSaveProgressNeeded = { millis ->
@@ -289,8 +291,8 @@ class WatchTimerService : Service() {
                 val requiredMillis = WatchSessionRepository.requiredMillis.value
                 val currentSec = (watchedMillis / 1000).toInt()
 
-                // Overlay shows ONLY when task is active and YouTube is in foreground
-                val shouldShowOverlay = sessionActive && isYtForeground && !isAppForeground
+                // Overlay shows ONLY when task is active, verified matching video, and YouTube is in foreground
+                val shouldShowOverlay = sessionActive && isYtForeground && !isAppForeground && isMatched
 
                 if (shouldShowOverlay) {
                     val searchOverlayStillActive = (YouTubeLiveSearchService.isSearchOverlayActive ||
