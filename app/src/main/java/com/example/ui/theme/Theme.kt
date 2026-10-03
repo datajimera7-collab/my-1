@@ -12,33 +12,53 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AmberPrimary,
+    primary = PrimaryDark,
     onPrimary = Slate900,
     primaryContainer = AmberDark,
     onPrimaryContainer = AmberLight,
-    secondary = Color(0xFF38BDF8),
+    secondary = SecondaryDark,
     onSecondary = Slate900,
-    background = Color(0xFF070B12), // Ultra-deep luxury obsidian slate
-    onBackground = Color(0xFFF8FAFC),
-    surface = Color(0xFF0F172A),    // Sleek elevated dark slate
-    onSurface = Color(0xFFF8FAFC),
-    surfaceVariant = Color(0xFF1E293B), // Card container
+    background = BackgroundDark,
+    onBackground = Slate100,
+    surface = SurfaceDark,
+    onSurface = Slate100,
+    surfaceVariant = Slate800,
     onSurfaceVariant = Color(0xFF94A3B8),
-    outline = Color(0xFF334155),
-    outlineVariant = Color(0xFF1E293B),
     error = AlertRed,
     onError = Color.White
 )
 
-private val LightColorScheme = DarkColorScheme // Default user app to dark theme as requested
+private val LightColorScheme = lightColorScheme(
+    primary = PrimaryLight,
+    onPrimary = Color.White,
+    primaryContainer = AmberLight,
+    onPrimaryContainer = Slate900,
+    secondary = SecondaryLight,
+    onSecondary = Color.White,
+    background = BackgroundLight,
+    onBackground = Slate900,
+    surface = SurfaceLight,
+    onSurface = Slate900,
+    surfaceVariant = Color(0xFFE2E8F0),
+    onSurfaceVariant = Color(0xFF475569),
+    error = AlertRed,
+    onError = Color.White
+)
 
 @Composable
 fun WatchEarnTheme(
-    darkTheme: Boolean = true, // Default to deep dark luxury theme for the User App
-    dynamicColor: Boolean = false,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = false, // Use our brand colors by default for consistent branding
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,
@@ -49,7 +69,7 @@ fun WatchEarnTheme(
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) = WatchEarnTheme(darkTheme = darkTheme, dynamicColor = dynamicColor, content = content)

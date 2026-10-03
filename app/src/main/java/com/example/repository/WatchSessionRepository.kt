@@ -162,13 +162,14 @@ object WatchSessionRepository {
 
         val activeId = _activeTaskId.value
         val sixHoursMillis = 6 * 60 * 60 * 1000L
-        onRequestHideOverlay?.invoke()
         if (activeId != null) {
             onTaskIncompleteAndLocked?.invoke(activeId, cleanReason, sixHoursMillis)
         }
         val serviceCallback = onServiceTaskIncomplete
         if (serviceCallback != null) {
             serviceCallback.invoke(activeId ?: "", cleanReason, sixHoursMillis)
+        } else {
+            onRequestHideOverlay?.invoke()
         }
     }
 
@@ -420,24 +421,21 @@ object WatchSessionRepository {
                 val elapsedSinceLaunch = System.currentTimeMillis() - taskLaunchTimestampMillis
                 val isLiveSearching = com.example.service.YouTubeLiveSearchService.currentPhase != com.example.service.YouTubeLiveSearchService.LiveSearchPhase.IDLE &&
                         com.example.service.YouTubeLiveSearchService.currentPhase != com.example.service.YouTubeLiveSearchService.LiveSearchPhase.COMPLETED
+                val lastClick = com.example.service.YouTubeLiveSearchService.lastClickTime
+                val elapsedSinceLiveClick = if (lastClick > 0L) System.currentTimeMillis() - lastClick else elapsedSinceLaunch
 
-                if (currentState == SessionState.ACTIVE) {
-                    if (isLikelyAd) {
-                        lastTickRealtime = 0L
-                        addLog("Pre-roll ad or sponsor detected (\"$detected\"). Timer paused until target video plays.", LogType.INFO)
-                    } else {
-                        // User changed or played a DIFFERENT video in YouTube!
-                        val wrongTitle = detected.ifBlank { "another video" }
-                        val message = "Task Incomplete! Target video (\"$target\") ke bajaye doosra video (\"$wrongTitle\") chal raha hai."
-                        triggerTaskIncomplete(message)
-                    }
-                } else if (elapsedSinceLaunch < 5500L || isLiveSearching) {
+                if (elapsedSinceLaunch < 5500L || isLiveSearching || (lastClick > 0L && elapsedSinceLiveClick < 5000L)) {
                     // Initial launch/search transition: do not count time yet, wait for target video to load
                     lastTickRealtime = 0L
                 } else if (isLikelyAd) {
                     // Pre-roll ad or sponsor: pause timer progress so ad time is not counted
                     lastTickRealtime = 0L
                     addLog("Pre-roll ad or sponsor detected (\"$detected\"). Timer paused until target video plays.", LogType.INFO)
+                } else if (currentState == SessionState.ACTIVE) {
+                    // User played a DIFFERENT video in YouTube!
+                    val wrongTitle = detected.ifBlank { "another video" }
+                    val message = "Different video detected (\"$wrongTitle\"). Please watch the assigned target video (\"$target\")."
+                    triggerTaskIncomplete(message)
                 }
             }
 

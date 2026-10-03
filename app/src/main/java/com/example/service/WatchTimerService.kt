@@ -114,8 +114,6 @@ class WatchTimerService : Service() {
         WatchSessionRepository.onServiceTaskIncomplete = { taskId, reason, lockDuration ->
             completionJob?.cancel()
             timerLoopJob?.cancel()
-            floatingOverlayManager.hideOverlay()
-            floatingOverlayManager.hideSearchLoadingOverlay()
             serviceScope.launch {
                 if (taskId.isNotBlank()) {
                     dataStoreManager.lockTask(taskId, lockDuration)
@@ -126,12 +124,6 @@ class WatchTimerService : Service() {
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
-            try {
-                val openIntent = Intent(this@WatchTimerService, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                }
-                startActivity(openIntent)
-            } catch (_: Exception) {}
         }
 
         WatchSessionRepository.onSaveProgressNeeded = { millis ->
@@ -291,8 +283,8 @@ class WatchTimerService : Service() {
                 val requiredMillis = WatchSessionRepository.requiredMillis.value
                 val currentSec = (watchedMillis / 1000).toInt()
 
-                // Overlay shows ONLY when task is active, verified matching video, and YouTube is in foreground
-                val shouldShowOverlay = sessionActive && isYtForeground && !isAppForeground && isMatched
+                // Overlay shows ONLY when task is active and YouTube is in foreground
+                val shouldShowOverlay = sessionActive && isYtForeground && !isAppForeground
 
                 if (shouldShowOverlay) {
                     val searchOverlayStillActive = (YouTubeLiveSearchService.isSearchOverlayActive ||
