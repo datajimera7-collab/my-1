@@ -2886,22 +2886,6 @@ class YouTubeLiveSearchService : AccessibilityService() {
             return
         }
 
-        // Schedule follow-up verification checks after any click below the video player
-        // so if YouTube transitions to a new video asynchronously, we immediately detect the new title
-        val uiHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        for (delayMs in listOf(250L, 600L, 1200L)) {
-            uiHandler.postDelayed({
-                if (isYouTubeInForeground) {
-                    try {
-                        val root = getYouTubeRootNode() ?: rootInActiveWindow
-                        if (root != null) {
-                            verifyActiveYouTubeVideo(root)
-                        }
-                    } catch (_: Exception) {}
-                }
-            }, delayMs)
-        }
-
         // Check if the directly clicked element itself is a harmless watch header, player setting, pause/play, like, or comment control
         val selfText = "$desc $text $eventSummary $viewId".lowercase()
         val looksLikeCard = selfText.contains("views") ||
@@ -3558,30 +3542,6 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         lockedWatchPageTitle = matchingCandidate
                     }
                     wrongVideoStrikeCount = 0
-                } else {
-                    val isCommentsOpen = isCommentActive || isCommentsSheetOrKeyboardOpen(entries)
-                    if (isCommentsOpen) {
-                        // User is viewing, typing, or sending comments on the target video: never strike based on comment text
-                        wrongVideoStrikeCount = 0
-                    } else {
-                        // Check if there is an explicit mismatched title candidate on the active screen
-                        val mismatchCandidate = cleanedTitleCandidates.firstOrNull { candidate ->
-                            TitleMatcher.evaluateMatch(candidate, targetTitle, activeChannel, targetAuthor) == com.example.data.MatchResult.MISMATCH
-                        }
-
-                        if (mismatchCandidate != null) {
-                            wrongVideoStrikeCount++
-                            if (wrongVideoStrikeCount >= 1) { // Immediate trigger on verified video mismatch!
-                                wrongVideoStrikeCount = 0
-                                WatchSessionRepository.triggerTaskIncomplete(
-                                    "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$mismatchCandidate\") play kar diya."
-                                )
-                                return
-                            }
-                        } else {
-                            wrongVideoStrikeCount = 0
-                        }
-                    }
                 }
             }
         } catch (_: Exception) {}

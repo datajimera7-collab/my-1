@@ -242,8 +242,8 @@ object WatchSessionRepository {
         _redAlertMessage.value = null
         _taskIncompleteMessage.value = null
         _isGracePeriodActive.value = false
-        _currentMediaTitle.value = taskTitle
-        _currentMediaArtist.value = taskAuthor
+        _currentMediaTitle.value = null
+        _currentMediaArtist.value = null
         _matchResult.value = MatchResult.MATCH
         _playbackState.value = VideoPlaybackState.PLAYING
         isMediaSessionExplicitlyPaused = false
@@ -420,24 +420,23 @@ object WatchSessionRepository {
                 val elapsedSinceLaunch = System.currentTimeMillis() - taskLaunchTimestampMillis
                 val isLiveSearching = com.example.service.YouTubeLiveSearchService.currentPhase != com.example.service.YouTubeLiveSearchService.LiveSearchPhase.IDLE &&
                         com.example.service.YouTubeLiveSearchService.currentPhase != com.example.service.YouTubeLiveSearchService.LiveSearchPhase.COMPLETED
+                val isWatchPlayerConfirmed = com.example.service.YouTubeLiveSearchService.isWatchPlayerConfirmedOpen
 
-                if (currentState == SessionState.ACTIVE) {
-                    if (isLikelyAd) {
-                        lastTickRealtime = 0L
-                        addLog("Pre-roll ad or sponsor detected (\"$detected\"). Timer paused until target video plays.", LogType.INFO)
-                    } else {
-                        // User changed or played a DIFFERENT video in YouTube!
-                        val wrongTitle = detected.ifBlank { "another video" }
-                        val message = "Task Incomplete! Target video (\"$target\") ke bajaye doosra video (\"$wrongTitle\") chal raha hai."
-                        triggerTaskIncomplete(message)
-                    }
-                } else if (elapsedSinceLaunch < 5500L || isLiveSearching) {
-                    // Initial launch/search transition: do not count time yet, wait for target video to load
+                if (elapsedSinceLaunch < 6000L || isLiveSearching || !isWatchPlayerConfirmed) {
+                    // Initial search/browse transition: do not count time yet, wait for target video to load
                     lastTickRealtime = 0L
-                } else if (isLikelyAd) {
+                    return
+                }
+
+                if (isLikelyAd) {
                     // Pre-roll ad or sponsor: pause timer progress so ad time is not counted
                     lastTickRealtime = 0L
                     addLog("Pre-roll ad or sponsor detected (\"$detected\"). Timer paused until target video plays.", LogType.INFO)
+                } else if (currentState == SessionState.ACTIVE) {
+                    // User genuinely changed or played a DIFFERENT video in YouTube!
+                    val wrongTitle = detected.ifBlank { "another video" }
+                    val message = "Task Incomplete! Target video (\"$target\") ke bajaye doosra video (\"$wrongTitle\") chal raha hai."
+                    triggerTaskIncomplete(message)
                 }
             }
 
@@ -471,12 +470,7 @@ object WatchSessionRepository {
                 _playbackState.value = VideoPlaybackState.PAUSED
                 lastTickRealtime = 0L
                 onRequestHideOverlay?.invoke()
-                val elapsedSinceLaunch = System.currentTimeMillis() - taskLaunchTimestampMillis
-                if (_sessionState.value == SessionState.ACTIVE && hasLeftAppForYouTube && elapsedSinceLaunch > 2500L) {
-                    triggerTaskIncomplete("Watch session ended before the timer completed.")
-                } else {
-                    addLog("App opened in foreground - watching paused", LogType.INFO)
-                }
+                addLog("App opened in foreground - watching paused", LogType.INFO)
             } else {
                 if (_sessionState.value == SessionState.ACTIVE) {
                     hasLeftAppForYouTube = true

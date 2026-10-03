@@ -181,7 +181,9 @@ object PermissionHelper {
                 setPackage(YOUTUBE_PACKAGE)
                 putExtra(android.app.SearchManager.QUERY, query)
                 putExtra("query", query)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
             }
         }
         return openYouTubeAppHomeIntent(context)

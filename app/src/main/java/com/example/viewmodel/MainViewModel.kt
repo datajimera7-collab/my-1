@@ -1194,7 +1194,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             ?: videoTasks.value.firstOrNull()?.id
             ?: "default_task"
 
-        // Check if task is currently locked (4h for completed, 6h for incomplete)
+        // Check if task is currently locked (4h for completed)
         val currentTask = videoTasks.value.find { it.id == resolvedTaskId }
         if (currentTask != null && currentTask.isLocked) {
             val remainStr = currentTask.getLockRemainingFormatted()
@@ -1202,15 +1202,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 WatchSessionRepository.showTaskIncompleteMessage(
                     "This task is completed and locked for 4 hours ($remainStr remaining)."
                 )
+                return
             } else {
-                WatchSessionRepository.showTaskIncompleteMessage(
-                    "This task is locked for 6 hours ($remainStr remaining) due to an incomplete session."
-                )
+                unlockTask(currentTask.id)
             }
-            return
         }
 
         viewModelScope.launch {
+            WatchSessionRepository.resetSessionForNewTask(resolvedTaskId)
             // Strict Continuous Watch Rule: Every session starts strictly at 00:00!
             dataStoreManager.setWatchedMillis(0L)
             WatchSessionRepository.setWatchedMillis(0L)
