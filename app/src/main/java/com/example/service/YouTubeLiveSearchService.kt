@@ -784,7 +784,7 @@ class YouTubeLiveSearchService : AccessibilityService() {
                     lastCommentClickTime = System.currentTimeMillis()
                     lastCommentComposerOpenTime = System.currentTimeMillis()
                     wasCommentComposerOpen = true
-                } else if (isSessionActive && (looksLikeVideoCard || isReadyForWatchVerification())) {
+                } else if (isSessionActive && (looksLikeVideoCard || isNextOrPrevOrCollapse)) {
                     checkIfUserClickedDifferentVideo(node, desc, text, viewId, "$evText $evDesc".trim())
                 }
 
@@ -3021,18 +3021,17 @@ class YouTubeLiveSearchService : AccessibilityService() {
         val lowerCard = cardText.lowercase()
         val cardViewId = (cardNode?.viewIdResourceName ?: viewId).lowercase()
 
-        // Never treat clicks on pure comment composer items or comment send as a video switch!
-        val isHarmlessItem = !looksLikeCard && (
-                cardViewId.contains("comment_composer") ||
-                cardViewId.contains("comment_box") ||
-                lowerCard.contains("like this video") ||
-                lowerCard.contains("add a comment") ||
-                lowerCard.contains("add a reply") ||
-                lowerCard.contains("टिप्पणी जोड़ें") ||
-                lowerCard.contains("जवाब जोड़ें")
-        )
+        val isConfirmedVideoCard = looksLikeCard ||
+                cardViewId.contains("video_lockup") ||
+                cardViewId.contains("compact_video") ||
+                cardViewId.contains("rich_item") ||
+                cardViewId.contains("video_card") ||
+                cardText.contains("Go to channel", ignoreCase = true) ||
+                cardText.contains("चैनल पर जाएं", ignoreCase = true) ||
+                cardText.contains("play video", ignoreCase = true)
 
-        if (isHarmlessItem) {
+        if (!isConfirmedVideoCard) {
+            // Not a video recommendation card. Never fail task on non-video clicks (e.g. comments, description, controls).
             return
         }
 

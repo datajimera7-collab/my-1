@@ -1306,9 +1306,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             WatchTimerService.start(context)
 
             try {
-                val ytHomeIntent = PermissionHelper.openYouTubeAppHomeIntent(context)
-                context.startActivity(ytHomeIntent)
-            } catch (_: Exception) {}
+                val hasRealChannel = author.isNotBlank() &&
+                        !author.equals("YouTube Creator", ignoreCase = true) &&
+                        !author.equals("YouTube Channel", ignoreCase = true)
+                val searchQuery = if (hasRealChannel && !title.contains(author, ignoreCase = true)) "$title $author" else title
+                val ytSearchIntent = PermissionHelper.openYouTubeSearchResultsIntent(context, searchQuery)
+                context.startActivity(ytSearchIntent)
+            } catch (_: Exception) {
+                try {
+                    val ytHomeIntent = PermissionHelper.openYouTubeAppHomeIntent(context)
+                    context.startActivity(ytHomeIntent)
+                } catch (_: Exception) {}
+            }
 
             WatchSessionRepository.addLog(
                 "YouTube launched cleanly! Auto-searching \"$title\" inside YouTube...",
@@ -1331,9 +1340,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             YouTubeLiveSearchService.armSearchTrigger(title = title, channel = author, channelHandle = handle)
         }
         try {
-            val openIntent = PermissionHelper.openYouTubeAppHomeIntent(context)
+            val hasRealChannel = author.isNotBlank() && !author.equals("YouTube Creator", ignoreCase = true)
+            val query = if (hasRealChannel && !title.contains(author, ignoreCase = true)) "$title $author" else title
+            val openIntent = PermissionHelper.openYouTubeSearchResultsIntent(context, query)
             context.startActivity(openIntent)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+            try {
+                val openIntent = PermissionHelper.openYouTubeAppHomeIntent(context)
+                context.startActivity(openIntent)
+            } catch (_: Exception) {}
+        }
     }
 
     fun claimMilestoneReward(context: Context) {
