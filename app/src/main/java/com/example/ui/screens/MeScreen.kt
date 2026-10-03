@@ -174,42 +174,25 @@ fun MeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             KingoLogoBadge(
                                 isAdmin = false,
                                 size = 38.dp
                             )
                             Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "VIP Profile & Account",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 17.sp,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.Verified,
-                                        contentDescription = "Verified",
-                                        tint = AmberPrimary,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                }
-                                Text(
-                                    text = "Account Security, Royalties & 24x7 Support",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFF94A3B8),
-                                    fontSize = 11.sp
-                                )
-                            }
+                            Text(
+                                text = "Account",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 19.sp,
+                                color = Color.White
+                            )
                         }
 
                         // Top-Right Live Support Button
@@ -335,28 +318,13 @@ fun MeScreen(
                                     Spacer(modifier = Modifier.width(14.dp))
 
                                     Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = currentUser?.name?.ifBlank { "Kingo Member" } ?: "Guest User",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Black,
-                                                fontSize = 17.sp,
-                                                color = Color.White
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Surface(
-                                                shape = RoundedCornerShape(4.dp),
-                                                color = AmberPrimary
-                                            ) {
-                                                Text(
-                                                    text = "VIP",
-                                                    fontSize = 9.sp,
-                                                    fontWeight = FontWeight.Black,
-                                                    color = Color.Black,
-                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                                )
-                                            }
-                                        }
+                                        Text(
+                                            text = currentUser?.name?.ifBlank { "Kingo Member" } ?: "Guest User",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 17.sp,
+                                            color = Color.White
+                                        )
 
                                         Text(
                                             text = currentUser?.email ?: "guest@watchearn.com",
@@ -396,41 +364,44 @@ fun MeScreen(
                                 }
                             }
 
-                            // 3 Quick Stats Chips inside Profile Hero
+                            // 3 Quick Stats Chips inside Profile Hero (Adaptive & Clean)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                                    .padding(12.dp),
+                                    .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                                    .padding(vertical = 10.dp, horizontal = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 ProfileMiniStat(
                                     label = "Wallet Balance",
                                     value = "$walletBalance C",
-                                    color = AmberPrimary
+                                    color = AmberPrimary,
+                                    modifier = Modifier.weight(1f)
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .height(24.dp)
+                                        .height(20.dp)
                                         .width(1.dp)
                                         .background(Color(0xFF334155))
                                 )
                                 ProfileMiniStat(
                                     label = "Tasks Done",
                                     value = "$completedCount/${availableTasks.size}",
-                                    color = SuccessGreen
+                                    color = SuccessGreen,
+                                    modifier = Modifier.weight(1f)
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .height(24.dp)
+                                        .height(20.dp)
                                         .width(1.dp)
                                         .background(Color(0xFF334155))
                                 )
                                 ProfileMiniStat(
-                                    label = "Account Status",
+                                    label = "Status",
                                     value = "Active 🟢",
-                                    color = Color(0xFF38BDF8)
+                                    color = Color(0xFF38BDF8),
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
@@ -554,19 +525,20 @@ fun MeScreen(
                                 ) {
                                     Text(
                                         text = myReferralCode,
-                                        fontSize = 28.sp,
+                                        fontSize = 25.sp,
                                         fontWeight = FontWeight.Black,
                                         color = AmberPrimary,
-                                        letterSpacing = 6.sp,
+                                        letterSpacing = 4.sp,
+                                        maxLines = 1,
                                         modifier = Modifier
-                                            .padding(horizontal = 20.dp, vertical = 6.dp)
+                                            .padding(horizontal = 16.dp, vertical = 6.dp)
                                             .testTag("me_referral_code_text")
                                     )
                                 }
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     // One-Tap Copy Button
                                     OutlinedButton(
@@ -578,7 +550,7 @@ fun MeScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(44.dp)
+                                            .height(42.dp)
                                             .testTag("me_copy_referral_btn"),
                                         shape = RoundedCornerShape(12.dp),
                                         border = BorderStroke(1.dp, Color(0xFF334155)),
@@ -588,14 +560,15 @@ fun MeScreen(
                                             imageVector = Icons.Default.ContentCopy,
                                             contentDescription = "Copy",
                                             tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
+                                            modifier = Modifier.size(15.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Copy Code",
+                                            text = "Copy Key",
                                             color = Color.White,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp
+                                            fontSize = 12.sp,
+                                            maxLines = 1
                                         )
                                     }
 
@@ -618,8 +591,8 @@ fun MeScreen(
                                             context.startActivity(shareIntent)
                                         },
                                         modifier = Modifier
-                                            .weight(1.2f)
-                                            .height(44.dp)
+                                            .weight(1f)
+                                            .height(42.dp)
                                             .testTag("me_share_referral_btn"),
                                         shape = RoundedCornerShape(12.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary)
@@ -628,14 +601,15 @@ fun MeScreen(
                                             imageVector = Icons.Default.Share,
                                             contentDescription = "Share",
                                             tint = Color.Black,
-                                            modifier = Modifier.size(16.dp)
+                                            modifier = Modifier.size(15.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Share with Friends",
+                                            text = "Share Key",
                                             color = Color.Black,
                                             fontWeight = FontWeight.Black,
-                                            fontSize = 12.5.sp
+                                            fontSize = 12.sp,
+                                            maxLines = 1
                                         )
                                     }
                                 }
@@ -674,10 +648,10 @@ fun MeScreen(
                                 )
                             }
 
-                            // Referral Analytics Counters
+                            // Referral Analytics Counters (Adaptive & Clean)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Card(
                                     modifier = Modifier.weight(1f),
@@ -686,12 +660,12 @@ fun MeScreen(
                                     border = BorderStroke(1.dp, Color(0xFF1E293B))
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(12.dp),
+                                        modifier = Modifier.padding(10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(32.dp)
+                                                .size(28.dp)
                                                 .background(PrimaryBlue.copy(alpha = 0.15f), CircleShape),
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -699,22 +673,26 @@ fun MeScreen(
                                                 imageVector = Icons.Default.Groups,
                                                 contentDescription = null,
                                                 tint = PrimaryBlue,
-                                                modifier = Modifier.size(16.dp)
+                                                modifier = Modifier.size(15.dp)
                                             )
                                         }
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Column {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 text = "Friends Joined",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = Color(0xFF94A3B8),
-                                                fontSize = 10.sp
+                                                fontSize = 9.5.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = "$referredFriendsCount Friends",
                                                 fontWeight = FontWeight.Black,
-                                                fontSize = 13.sp,
-                                                color = Color.White
+                                                fontSize = 12.5.sp,
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
@@ -727,12 +705,12 @@ fun MeScreen(
                                     border = BorderStroke(1.dp, Color(0xFF1E293B))
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(12.dp),
+                                        modifier = Modifier.padding(10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(32.dp)
+                                                .size(28.dp)
                                                 .background(SuccessGreen.copy(alpha = 0.15f), CircleShape),
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -740,22 +718,26 @@ fun MeScreen(
                                                 imageVector = Icons.Default.CardGiftcard,
                                                 contentDescription = null,
                                                 tint = SuccessGreen,
-                                                modifier = Modifier.size(16.dp)
+                                                modifier = Modifier.size(15.dp)
                                             )
                                         }
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Column {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = "Total Commission",
+                                                text = "Commission",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = Color(0xFF94A3B8),
-                                                fontSize = 10.sp
+                                                fontSize = 9.5.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = "+$totalReferralBonusCoins Coins",
                                                 fontWeight = FontWeight.Black,
-                                                fontSize = 13.sp,
-                                                color = SuccessGreen
+                                                fontSize = 12.5.sp,
+                                                color = SuccessGreen,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
@@ -776,11 +758,11 @@ fun MeScreen(
                         color = Color.White
                     )
 
-                    // Live VIP Support Chat Card
+                    // Live Support Chat Card
                     AccountActionCard(
                         icon = Icons.AutoMirrored.Filled.Chat,
                         iconTint = PrimaryBlue,
-                        title = "24x7 Live VIP Support Chat",
+                        title = "24x7 Live Support Chat",
                         subtitle = "Chat directly with admin • Quick resolution",
                         onClick = { showSupportChatDialog = true }
                     )
@@ -1140,21 +1122,29 @@ fun MeScreen(
 private fun ProfileMiniStat(
     label: String,
     value: String,
-    color: Color
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
         Text(
             text = label,
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF94A3B8)
+            color = Color(0xFF94A3B8),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
             fontSize = 13.sp,
             fontWeight = FontWeight.Black,
-            color = color
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

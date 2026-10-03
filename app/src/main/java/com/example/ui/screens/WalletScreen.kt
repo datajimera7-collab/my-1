@@ -195,82 +195,25 @@ fun WalletScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         KingoLogoBadge(
                             isAdmin = false,
                             size = 38.dp
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Kingo Gold Wallet",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Icon(
-                                    imageVector = Icons.Default.Verified,
-                                    contentDescription = "Verified Wallet",
-                                    tint = AmberPrimary,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .background(SuccessGreen, CircleShape)
-                                )
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = "Instant 24x7 UPI Payouts Active",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontSize = 10.5.sp,
-                                    color = SuccessGreen,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-
-                    // Top-Right Passbook / History Button
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = Color(0xFF1E293B),
-                        border = BorderStroke(1.dp, AmberPrimary.copy(alpha = 0.4f)),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .clickable { showHistoryPage = true }
-                            .testTag("wallet_history_button")
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.History,
-                                contentDescription = "Passbook",
-                                tint = AmberPrimary,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = "Passbook",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = AmberLight
-                            )
-                        }
+                        Text(
+                            text = "Kingo Wallet",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
                     }
                 }
                 HorizontalDivider(color = Color(0xFF1E293B))
@@ -299,9 +242,9 @@ fun WalletScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(16.dp, RoundedCornerShape(24.dp), ambientColor = AmberPrimary.copy(alpha = 0.2f), spotColor = AmberPrimary.copy(alpha = 0.3f))
+                        .shadow(16.dp, RoundedCornerShape(22.dp), ambientColor = AmberPrimary.copy(alpha = 0.2f), spotColor = AmberPrimary.copy(alpha = 0.3f))
                         .testTag("wallet_hero_card"),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                 ) {
                     Box(
@@ -325,15 +268,15 @@ fun WalletScreen(
                                         AmberPrimary.copy(alpha = 0.7f)
                                     )
                                 ),
-                                RoundedCornerShape(24.dp)
+                                RoundedCornerShape(22.dp)
                             )
-                            .padding(20.dp)
+                            .padding(18.dp)
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            // Card Top Row: EMV Chip + NFC Symbol + Card Brand
+                            // Top Row: Label + Real Cash Translation Pill
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -342,106 +285,70 @@ fun WalletScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
                                         modifier = Modifier
-                                            .size(width = 34.dp, height = 24.dp)
-                                            .background(
-                                                Brush.linearGradient(
-                                                    listOf(Color(0xFFD97706), Color(0xFFFBBF24))
-                                                ),
-                                                RoundedCornerShape(4.dp)
-                                            )
-                                            .border(0.8.dp, Color(0xFFFDE68A), RoundedCornerShape(4.dp))
+                                            .size(width = 4.dp, height = 12.dp)
+                                            .background(AmberPrimary, RoundedCornerShape(2.dp))
                                     )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.Nfc,
-                                        contentDescription = "Contactless",
-                                        tint = AmberLight.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(20.dp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "AVAILABLE BALANCE",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF94A3B8),
+                                        letterSpacing = 1.sp
                                     )
                                 }
 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .background(AmberPrimary.copy(alpha = 0.15f), RoundedCornerShape(50))
-                                        .border(1.dp, AmberPrimary.copy(alpha = 0.4f), RoundedCornerShape(50))
-                                        .padding(horizontal = 9.dp, vertical = 3.dp)
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = SuccessGreen.copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.45f))
                                 ) {
                                     Text(
-                                        text = "VIP MEMBER",
-                                        color = AmberLight,
-                                        fontSize = 10.sp,
+                                        text = "≈ ₹$formattedInr",
+                                        color = SuccessGreen,
                                         fontWeight = FontWeight.Black,
-                                        letterSpacing = 1.sp
+                                        fontSize = 14.sp,
+                                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
                                     )
                                 }
                             }
 
                             // Balance Display
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = "AVAILABLE EARNINGS BALANCE",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF94A3B8),
-                                    letterSpacing = 1.2.sp
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MonetizationOn,
+                                    contentDescription = "Coins",
+                                    tint = AmberPrimary,
+                                    modifier = Modifier.size(34.dp)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.MonetizationOn,
-                                            contentDescription = "Coins",
-                                            tint = AmberPrimary,
-                                            modifier = Modifier.size(36.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "$walletBalance",
-                                            fontSize = 34.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Coins",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = AmberPrimary
-                                        )
-                                    }
-
-                                    // Real Cash Translation Pill
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = SuccessGreen.copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.45f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = "≈ ₹$formattedInr",
-                                                color = SuccessGreen,
-                                                fontWeight = FontWeight.Black,
-                                                fontSize = 16.sp
-                                            )
-                                        }
-                                    }
-                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "$walletBalance",
+                                    fontSize = 32.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Coins",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AmberPrimary,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                )
                             }
 
                             // Payout Progress Bar & Quick Status
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-                                    .padding(12.dp),
+                                    .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                    .padding(10.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Row(
@@ -450,11 +357,15 @@ fun WalletScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = if (coinsNeededForNext > 0) "Need $coinsNeededForNext more Coins for ₹10 Payout" else "🎉 Payout Threshold Unlocked (₹10+ ready)",
+                                        text = if (coinsNeededForNext > 0) "Need $coinsNeededForNext more for ₹10 payout" else "🎉 ₹10+ Payout Ready",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (coinsNeededForNext > 0) Color(0xFFCBD5E1) else SuccessGreen
+                                        color = if (coinsNeededForNext > 0) Color(0xFFCBD5E1) else SuccessGreen,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false)
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = "1000 C = ₹10",
                                         fontSize = 10.5.sp,
@@ -478,13 +389,13 @@ fun WalletScreen(
                                 onClick = { showWithdrawDialog = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(50.dp)
+                                    .height(48.dp)
                                     .testTag("withdraw_action_button"),
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = AmberPrimary
                                 ),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -494,21 +405,21 @@ fun WalletScreen(
                                         imageVector = Icons.Default.FlashOn,
                                         contentDescription = null,
                                         tint = Color.Black,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Instant Cashout (UPI / Paytm / Bank)",
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.Black,
-                                        fontSize = 15.sp
+                                        modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Instant Cashout (UPI / Paytm)",
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.Black,
+                                        fontSize = 14.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                         contentDescription = null,
                                         tint = Color.Black,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(15.dp)
                                     )
                                 }
                             }
@@ -538,24 +449,50 @@ fun WalletScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.Security,
+                                    imageVector = Icons.Default.VerifiedUser,
                                     contentDescription = null,
                                     tint = SuccessGreen,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Supported Instant Payout Channels",
-                                    fontSize = 12.sp,
+                                    text = "Supported Payout Modes",
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White
                                 )
                             }
-                            Text(
-                                text = "0% Fee • 1-Min Credit",
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = SuccessGreen
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = SuccessGreen.copy(alpha = 0.15f),
+                                border = BorderStroke(0.8.dp, SuccessGreen.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "0% Fee • Instant",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SuccessGreen,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        // 2x2 Clean Grid for All Screen Sizes
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PaymentChannelCard(
+                                icon = Icons.Default.QrCode2,
+                                title = "UPI Instant",
+                                subtitle = "PhonePe / GPay / BHIM",
+                                modifier = Modifier.weight(1f)
+                            )
+                            PaymentChannelCard(
+                                icon = Icons.Default.AccountBalanceWallet,
+                                title = "Paytm Wallet",
+                                subtitle = "Direct Transfer",
+                                modifier = Modifier.weight(1f)
                             )
                         }
 
@@ -563,28 +500,16 @@ fun WalletScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            PaymentChannelPill(
-                                icon = Icons.Default.QrCode2,
-                                title = "UPI ID",
-                                subtitle = "PhonePe/GPay",
-                                modifier = Modifier.weight(1f)
-                            )
-                            PaymentChannelPill(
-                                icon = Icons.Default.AccountBalanceWallet,
-                                title = "Paytm",
-                                subtitle = "Instant Wallet",
-                                modifier = Modifier.weight(1f)
-                            )
-                            PaymentChannelPill(
+                            PaymentChannelCard(
                                 icon = Icons.Default.AccountBalance,
                                 title = "Bank IMPS",
-                                subtitle = "Direct Transfer",
+                                subtitle = "Direct Account Payout",
                                 modifier = Modifier.weight(1f)
                             )
-                            PaymentChannelPill(
+                            PaymentChannelCard(
                                 icon = Icons.Default.CardGiftcard,
-                                title = "Gift Card",
-                                subtitle = "Play / Amazon",
+                                title = "Gift Cards",
+                                subtitle = "Play & Amazon Pay",
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -835,7 +760,7 @@ fun WalletScreen(
 }
 
 @Composable
-private fun PaymentChannelPill(
+private fun PaymentChannelCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String,
@@ -844,34 +769,44 @@ private fun PaymentChannelPill(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF1E293B).copy(alpha = 0.6f),
+        color = Color(0xFF1E293B).copy(alpha = 0.55f),
         border = BorderStroke(0.8.dp, Color(0xFF334155))
     ) {
-        Column(
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = AmberLight,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = title,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                maxLines = 1
-            )
-            Text(
-                text = subtitle,
-                fontSize = 8.5.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF94A3B8),
-                maxLines = 1
-            )
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(AmberPrimary.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = AmberPrimary,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 9.sp,
+                    color = Color(0xFF94A3B8),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -888,19 +823,19 @@ private fun StatsSummaryTile(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
         border = BorderStroke(1.dp, Color(0xFF1E293B))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(26.dp)
                     .background(iconBg, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -908,22 +843,24 @@ private fun StatsSummaryTile(
                     imageVector = icon,
                     contentDescription = null,
                     tint = iconTint,
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(14.dp)
                 )
             }
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF94A3B8),
-                fontSize = 10.sp,
-                maxLines = 1
+                fontSize = 9.5.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = value,
-                fontSize = 13.5.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Black,
                 color = valueColor,
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
