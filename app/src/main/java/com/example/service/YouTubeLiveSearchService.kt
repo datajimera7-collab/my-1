@@ -731,7 +731,14 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         (isExplicitCommentSendLabel || isRightSideSendIcon)
 
                 val isAnyLikeClick = isVideoLikeButtonTarget || combined.contains("like this video") || combined.contains("unlike") || viewId.contains("like_button") || viewId.contains("segmented_like")
-                val isAnyCommentClick = combined.contains("comment") || combined.contains("टिप्पणी") || combined.contains("reply") || combined.contains("जवाब") || viewId.contains("comment") || viewId.contains("engagement") || wasCommentComposerOpen
+                val isAnyCommentClick = !looksLikeVideoCard && (
+                    combined.contains("comment") ||
+                    combined.contains("टिप्पणी") ||
+                    combined.contains("reply") ||
+                    combined.contains("जवाब") ||
+                    viewId.contains("comment") ||
+                    viewId.contains("engagement")
+                )
 
                 if (isAnyLikeClick) {
                     if (isGenuineVideoLikeClick) {
@@ -742,8 +749,6 @@ class YouTubeLiveSearchService : AccessibilityService() {
                     }
                 } else if (isGenuineCommentSubmitted) {
                     triggerGenuineCommentReward("Clicked YouTube Comment Send button")
-                } else if (isAnyCommentClick) {
-                    // Harmless comment click (reading comments, opening comments box, etc.) - never treat as video switch!
                 } else if (isPlayPauseBtnClick) {
                     // Toggle immediately for instant UI responsiveness, then verify actual post-click button state
                     updateVideoPausedState(!isVideoExplicitlyPaused)
@@ -757,16 +762,18 @@ class YouTubeLiveSearchService : AccessibilityService() {
                     val handler = android.os.Handler(android.os.Looper.getMainLooper())
                     handler.postDelayed({ checkPlaybackControls(getYouTubeRootNode()) }, 200L)
                     handler.postDelayed({ checkPlaybackControls(getYouTubeRootNode()) }, 500L)
-                } else if (isSessionActive && isReadyForWatchVerification()) {
+                } else if (isAnyCommentClick) {
+                    // Harmless comment click (reading comments, opening comments box, etc.) - never treat as video switch!
+                } else if (isSessionActive && (looksLikeVideoCard || isReadyForWatchVerification())) {
                     checkIfUserClickedDifferentVideo(node, desc, text, viewId, "$evText $evDesc".trim())
                 }
 
-                if (isSessionActive && isReadyForWatchVerification()) {
+                if (isSessionActive) {
                     val handler = android.os.Handler(android.os.Looper.getMainLooper())
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 350L)
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 800L)
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 1500L)
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 2500L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 200L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 550L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 1100L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 2000L)
                 }
                 node?.recycle()
             } catch (_: Exception) {}
@@ -2676,8 +2683,7 @@ class YouTubeLiveSearchService : AccessibilityService() {
         if (!isWatchPlayerConfirmedOpen) return false
         val elapsedSinceLaunch = System.currentTimeMillis() - WatchSessionRepository.taskLaunchTimestampMillis
         val isLiveSearching = currentPhase != LiveSearchPhase.IDLE && currentPhase != LiveSearchPhase.COMPLETED
-        val elapsedSinceClick = if (lastClickTime > 0L) System.currentTimeMillis() - lastClickTime else elapsedSinceLaunch
-        return !isLiveSearching && elapsedSinceLaunch > 3000L && elapsedSinceClick > 1600L
+        return !isLiveSearching && elapsedSinceLaunch > 2000L
     }
 
     fun inspectCurrentYouTubeState() {
@@ -2853,12 +2859,10 @@ class YouTubeLiveSearchService : AccessibilityService() {
         val clickRect = android.graphics.Rect()
         clickedNode?.getBoundsInScreen(clickRect)
 
-        // Ignore clicks with invalid/full-screen container bounds or clicks inside the top video player area
+        // Ignore clicks with invalid bounds or clicks inside the top video player area
         if (clickRect.width() <= 0 ||
             clickRect.height() <= 0 ||
-            clickRect.height() > (screenHeight * 0.56f).toInt() ||
-            clickRect.bottom in 1..topPlayerMaxBottom ||
-            clickRect.top < (playerBottomY + (24 * density).toInt())
+            (clickRect.bottom in 1..topPlayerMaxBottom && clickRect.top in 0..topPlayerMaxBottom)
         ) {
             return
         }
@@ -2866,9 +2870,9 @@ class YouTubeLiveSearchService : AccessibilityService() {
         // Schedule follow-up verification checks after any click below the video player
         // so if YouTube transitions to a new video asynchronously, we immediately detect the new title
         val uiHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        for (delayMs in listOf(350L, 800L, 1400L)) {
+        for (delayMs in listOf(250L, 600L, 1200L)) {
             uiHandler.postDelayed({
-                if (isYouTubeInForeground && isReadyForWatchVerification()) {
+                if (isYouTubeInForeground) {
                     try {
                         val root = getYouTubeRootNode() ?: rootInActiveWindow
                         if (root != null) {
@@ -3017,7 +3021,9 @@ class YouTubeLiveSearchService : AccessibilityService() {
             return
         }
 
-        val cleanClickedTitle = extractCleanTitleCandidate(cardText)
+        val cleanClickedTitle = TitleMatcher.extractCardVideoTitleOnly(cardText, null, null).ifBlank {
+            extractCleanTitleCandidate(cardText)
+        }
         if (cleanClickedTitle.length >= 5 &&
             !CHROME_LABELS.contains(cleanClickedTitle.lowercase()) &&
             !cleanClickedTitle.contains("like", ignoreCase = true) &&
@@ -3217,23 +3223,18 @@ class YouTubeLiveSearchService : AccessibilityService() {
     private fun isCommentsOrEngagementActive(entries: List<UiNodeEntry>): Boolean {
         val now = System.currentTimeMillis()
         if (isSoftKeyboardVisible()) return true
-        if (wasCommentComposerOpen && (now - lastCommentComposerOpenTime) < 30_000L) return true
-        if (wasCommentEditTextActive && (now - lastTypedCommentTime) < 20_000L) return true
+        if (wasCommentComposerOpen && (now - lastCommentComposerOpenTime) < 15_000L) return true
+        if (wasCommentEditTextActive && (now - lastTypedCommentTime) < 15_000L) return true
 
         return entries.any { e ->
             val v = e.viewId.lowercase()
             val d = e.desc.trim().lowercase()
-            val t = e.text.trim().lowercase()
 
             (e.isEditable && (v.contains("comment") || v.contains("reply") || v.contains("composer"))) ||
             v.contains("comment_composer") ||
             d == "close comments" ||
             d == "close description" ||
-            d.startsWith("reply to ") ||
-            t == "add a comment" ||
-            t == "add a reply" ||
-            d == "add a comment" ||
-            d == "add a reply"
+            d.startsWith("reply to ")
         }
     }
 
@@ -3535,17 +3536,31 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         lockedWatchPageTitle = matchingCandidate
                     }
                     wrongVideoStrikeCount = 0
-                } else if (!isCommentActive && !isSoftKeyboardVisible()) {
-                    wrongVideoStrikeCount++
-                    if (wrongVideoStrikeCount >= 2) {
-                        val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
+                } else {
+                    // Check if there is an explicit mismatched title candidate on the active screen
+                    val mismatchCandidate = cleanedTitleCandidates.firstOrNull { candidate ->
+                        TitleMatcher.evaluateMatch(candidate, targetTitle, null, targetAuthor) == com.example.data.MatchResult.MISMATCH
+                    }
+
+                    if (mismatchCandidate != null) {
                         wrongVideoStrikeCount = 0
                         WatchSessionRepository.triggerTaskIncomplete(
-                            "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya."
+                            "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$mismatchCandidate\") play kar diya."
                         )
+                        return
+                    } else if (!isCommentActive && !isSoftKeyboardVisible()) {
+                        wrongVideoStrikeCount++
+                        if (wrongVideoStrikeCount >= 2) {
+                            val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
+                            wrongVideoStrikeCount = 0
+                            WatchSessionRepository.triggerTaskIncomplete(
+                                "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya."
+                            )
+                            return
+                        }
+                    } else {
+                        wrongVideoStrikeCount = 0
                     }
-                } else {
-                    wrongVideoStrikeCount = 0
                 }
             }
         } catch (_: Exception) {}

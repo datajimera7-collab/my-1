@@ -442,7 +442,7 @@ fun MeScreen(
                                 ),
                                 RoundedCornerShape(24.dp)
                             )
-                            .padding(20.dp)
+                            .padding(16.dp)
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -451,40 +451,39 @@ fun MeScreen(
                             // Section Header
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(38.dp)
-                                            .background(AmberPrimary.copy(alpha = 0.15f), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CardGiftcard,
-                                            contentDescription = null,
-                                            tint = AmberPrimary,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = "Invite & Earn 10% Forever",
-                                            fontWeight = FontWeight.Black,
-                                            fontSize = 16.sp,
-                                            color = Color.White
-                                        )
-                                        Text(
-                                            text = "Get 10% commission on every friend's cashout",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFF94A3B8),
-                                            fontSize = 11.sp
-                                        )
-                                    }
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .background(AmberPrimary.copy(alpha = 0.15f), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CardGiftcard,
+                                        contentDescription = null,
+                                        tint = AmberPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
-
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Invite & Earn 10%",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 16.sp,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "10% commission on every friend's cashout",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF94A3B8),
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Surface(
                                     shape = RoundedCornerShape(50),
                                     color = SuccessGreen.copy(alpha = 0.15f),
@@ -501,154 +500,160 @@ fun MeScreen(
                             }
 
                             // 6-Digit Code Showcase Box
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
-                                    .border(1.dp, AmberPrimary.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFF090D16),
+                                border = BorderStroke(1.dp, Color(0xFF1E293B)),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = "YOUR UNIQUE 6-DIGIT REFERRAL KEY",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFF94A3B8),
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.2.sp
-                                )
-
-                                Surface(
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = Color(0xFF0F172A),
-                                    border = BorderStroke(1.dp, AmberPrimary)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Text(
-                                        text = myReferralCode,
-                                        fontSize = 25.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = AmberPrimary,
-                                        letterSpacing = 4.sp,
-                                        maxLines = 1,
-                                        modifier = Modifier
-                                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                                            .testTag("me_referral_code_text")
+                                        text = "YOUR 6-DIGIT REFERRAL KEY",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF94A3B8),
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.2.sp,
+                                        fontSize = 10.sp
                                     )
-                                }
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    // One-Tap Copy Button
-                                    OutlinedButton(
-                                        onClick = {
-                                            viewModel.recordSharedReferralCode(myReferralCode)
-                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                            clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo Refer Key", myReferralCode))
-                                            Toast.makeText(context, "Referral Key $myReferralCode copied to clipboard!", Toast.LENGTH_SHORT).show()
-                                        },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(42.dp)
-                                            .testTag("me_copy_referral_btn"),
+                                    Surface(
                                         shape = RoundedCornerShape(12.dp),
-                                        border = BorderStroke(1.dp, Color(0xFF334155)),
-                                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFF1E293B))
+                                        color = Color(0xFF0F172A),
+                                        border = BorderStroke(1.dp, AmberPrimary)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ContentCopy,
-                                            contentDescription = "Copy",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(15.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Copy Key",
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
-                                            maxLines = 1
+                                            text = myReferralCode,
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = AmberPrimary,
+                                            letterSpacing = 4.sp,
+                                            maxLines = 1,
+                                            modifier = Modifier
+                                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                                                .testTag("me_referral_code_text")
                                         )
                                     }
 
-                                    // Direct Share Button (WhatsApp / System)
-                                    Button(
-                                        onClick = {
-                                            viewModel.recordSharedReferralCode(myReferralCode)
-                                            val cleanDownloadUrl = com.example.data.DataStoreManager.normalizeAppDownloadUrl(appDownloadUrl)
-                                            val shareMsg = "👑 *Watch & Earn Real Cash with Kingo King!*\n\n" +
-                                                "🎁 Use my 6-Digit Referral Key: *$myReferralCode*\n" +
-                                                "🎉 Get *+50 Free Bonus Coins* on signup!\n\n" +
-                                                "📲 Download App Now:\n$cleanDownloadUrl"
-
-                                            val sendIntent = Intent().apply {
-                                                action = Intent.ACTION_SEND
-                                                putExtra(Intent.EXTRA_TEXT, shareMsg)
-                                                type = "text/plain"
-                                            }
-                                            val shareIntent = Intent.createChooser(sendIntent, "Invite Friends to Kingo King")
-                                            context.startActivity(shareIntent)
-                                        },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(42.dp)
-                                            .testTag("me_share_referral_btn"),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = "Share",
-                                            tint = Color.Black,
-                                            modifier = Modifier.size(15.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Share Key",
-                                            color = Color.Black,
-                                            fontWeight = FontWeight.Black,
-                                            fontSize = 12.sp,
-                                            maxLines = 1
-                                        )
+                                        // One-Tap Copy Button
+                                        OutlinedButton(
+                                            onClick = {
+                                                viewModel.recordSharedReferralCode(myReferralCode)
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                clipboard?.setPrimaryClip(ClipData.newPlainText("Kingo Refer Key", myReferralCode))
+                                                Toast.makeText(context, "Referral Key $myReferralCode copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .testTag("me_copy_referral_btn"),
+                                            shape = RoundedCornerShape(12.dp),
+                                            border = BorderStroke(1.dp, Color(0xFF334155)),
+                                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFF1E293B))
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Copy",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Copy Key",
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                maxLines = 1
+                                            )
+                                        }
+
+                                        // Direct Share Button (WhatsApp / System)
+                                        Button(
+                                            onClick = {
+                                                viewModel.recordSharedReferralCode(myReferralCode)
+                                                val cleanDownloadUrl = com.example.data.DataStoreManager.normalizeAppDownloadUrl(appDownloadUrl)
+                                                val shareMsg = "👑 *Watch & Earn Real Cash with Kingo King!*\n\n" +
+                                                    "🎁 Use my 6-Digit Referral Key: *$myReferralCode*\n" +
+                                                    "🎉 Get *+50 Free Bonus Coins* on signup!\n\n" +
+                                                    "📲 Download App Now:\n$cleanDownloadUrl"
+
+                                                val sendIntent = Intent().apply {
+                                                    action = Intent.ACTION_SEND
+                                                    putExtra(Intent.EXTRA_TEXT, shareMsg)
+                                                    type = "text/plain"
+                                                }
+                                                val shareIntent = Intent.createChooser(sendIntent, "Invite Friends to Kingo King")
+                                                context.startActivity(shareIntent)
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .testTag("me_share_referral_btn"),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = AmberPrimary)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = "Share",
+                                                tint = Color.Black,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Share Key",
+                                                color = Color.Black,
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 12.sp,
+                                                maxLines = 1
+                                            )
+                                        }
                                     }
                                 }
                             }
 
-                            // 3-Step Illustrated Guide (Replacing old User A / User B)
+                            // 3-Step Illustrated Guide (Concise, Clean, No Cramping)
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0xFF0B111E), RoundedCornerShape(16.dp))
+                                    .background(Color(0xFF090D16), RoundedCornerShape(16.dp))
                                     .border(1.dp, Color(0xFF1E293B), RoundedCornerShape(16.dp))
                                     .padding(14.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
                                     text = "How Refer & Earn Program Works",
-                                    fontSize = 12.5.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Black,
                                     color = AmberLight
                                 )
 
                                 ReferralStepItem(
                                     stepNumber = "1",
-                                    title = "Share Your 6-Digit Key",
-                                    desc = "Send your key ($myReferralCode) and app download link to friends on WhatsApp or Telegram."
+                                    title = "Share Your Key",
+                                    desc = "Send your key ($myReferralCode) to friends on WhatsApp or Telegram."
                                 )
                                 ReferralStepItem(
                                     stepNumber = "2",
                                     title = "Friend Installs & Enters Key",
-                                    desc = "Your friend signs up with your key and instantly gets +50 Welcome Bonus Coins."
+                                    desc = "They sign up with your key & instantly get +50 Welcome Bonus Coins."
                                 )
                                 ReferralStepItem(
                                     stepNumber = "3",
                                     title = "10% Royalties for Life",
-                                    desc = "Every time your invited friend cashes out, 10% bonus coins are automatically deposited into your wallet forever!"
+                                    desc = "Earn 10% bonus coins every time your invited friend cashes out!"
                                 )
                             }
 
-                            // Referral Analytics Counters (Adaptive & Clean)
+                            // Referral Analytics Counters (Clean & Responsive)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
