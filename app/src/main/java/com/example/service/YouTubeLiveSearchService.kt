@@ -124,6 +124,9 @@ class YouTubeLiveSearchService : AccessibilityService() {
         private var lastCommentComposerOpenTime: Long = 0L
 
         @Volatile
+        private var lastCommentClickTime: Long = 0L
+
+        @Volatile
         private var lastCommentCancelClickTime: Long = 0L
 
         @Volatile
@@ -252,6 +255,7 @@ class YouTubeLiveSearchService : AccessibilityService() {
             wasCommentComposerOpen = false
             wasCommentEditTextActive = false
             lastCommentComposerOpenTime = 0L
+            lastCommentClickTime = 0L
             lastCommentCancelClickTime = 0L
             lastCommentRewardTriggerTime = 0L
             wasTargetVideoLikedInSession = false
@@ -538,16 +542,20 @@ class YouTubeLiveSearchService : AccessibilityService() {
                 val subtreeText = subtreeSb.toString().trim()
                 val combined = "$desc $text $evText $evDesc $viewId $subtreeText".lowercase()
 
-                // Track if user clicked to open the comment box / composer
+                // Track if user clicked to open the comment box / composer or clicked any comment
                 if (combined.contains("add a comment") ||
                     combined.contains("add a reply") ||
                     combined.contains("टिप्पणी जोड़ें") ||
                     combined.contains("जवाब जोड़ें") ||
-                    viewId.contains("comment_composer", ignoreCase = true) ||
-                    viewId.contains("comments_entry_point", ignoreCase = true)
+                    combined.contains("comment") ||
+                    combined.contains("टिप्पणी") ||
+                    combined.contains("reply") ||
+                    viewId.contains("comment", ignoreCase = true) ||
+                    viewId.contains("engagement", ignoreCase = true)
                 ) {
                     wasCommentComposerOpen = true
                     lastCommentComposerOpenTime = System.currentTimeMillis()
+                    lastCommentClickTime = System.currentTimeMillis()
                 }
 
                 // Track if user clicked Cancel / Close / Discard on a comment draft
@@ -731,14 +739,20 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         (isExplicitCommentSendLabel || isRightSideSendIcon)
 
                 val isAnyLikeClick = isVideoLikeButtonTarget || combined.contains("like this video") || combined.contains("unlike") || viewId.contains("like_button") || viewId.contains("segmented_like")
-                val isAnyCommentClick = !looksLikeVideoCard && (
-                    combined.contains("comment") ||
+                val isAnyCommentClick = combined.contains("comment") ||
                     combined.contains("टिप्पणी") ||
                     combined.contains("reply") ||
                     combined.contains("जवाब") ||
+                    combined.contains("add a comment") ||
+                    combined.contains("add a reply") ||
                     viewId.contains("comment") ||
-                    viewId.contains("engagement")
-                )
+                    viewId.contains("engagement") ||
+                    desc.contains("comment", ignoreCase = true) ||
+                    text.contains("comment", ignoreCase = true) ||
+                    desc.contains("add a comment", ignoreCase = true) ||
+                    text.contains("add a comment", ignoreCase = true) ||
+                    desc.equals("Close comments", ignoreCase = true) ||
+                    desc.equals("Close", ignoreCase = true)
 
                 if (isAnyLikeClick) {
                     if (isGenuineVideoLikeClick) {
@@ -764,16 +778,18 @@ class YouTubeLiveSearchService : AccessibilityService() {
                     handler.postDelayed({ checkPlaybackControls(getYouTubeRootNode()) }, 500L)
                 } else if (isAnyCommentClick) {
                     // Harmless comment click (reading comments, opening comments box, etc.) - never treat as video switch!
+                    lastCommentClickTime = System.currentTimeMillis()
+                    lastCommentComposerOpenTime = System.currentTimeMillis()
+                    wasCommentComposerOpen = true
                 } else if (isSessionActive && (looksLikeVideoCard || isReadyForWatchVerification())) {
                     checkIfUserClickedDifferentVideo(node, desc, text, viewId, "$evText $evDesc".trim())
                 }
 
-                if (isSessionActive) {
+                if (isSessionActive && !isAnyCommentClick) {
                     val handler = android.os.Handler(android.os.Looper.getMainLooper())
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 200L)
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 550L)
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 1100L)
-                    handler.postDelayed({ inspectCurrentYouTubeState() }, 2000L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 300L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 750L)
+                    handler.postDelayed({ inspectCurrentYouTubeState() }, 1500L)
                 }
                 node?.recycle()
             } catch (_: Exception) {}
@@ -2888,6 +2904,7 @@ class YouTubeLiveSearchService : AccessibilityService() {
         val now = System.currentTimeMillis()
         if (isSoftKeyboardVisible() ||
             (now - lastCommentComposerOpenTime) < 60_000L ||
+            (now - lastCommentClickTime) < 60_000L ||
             (now - lastTypedCommentTime) < 45_000L ||
             selfText.contains("like") ||
             selfText.contains("dislike") ||
@@ -3223,8 +3240,9 @@ class YouTubeLiveSearchService : AccessibilityService() {
     private fun isCommentsOrEngagementActive(entries: List<UiNodeEntry>): Boolean {
         val now = System.currentTimeMillis()
         if (isSoftKeyboardVisible()) return true
-        if (wasCommentComposerOpen && (now - lastCommentComposerOpenTime) < 15_000L) return true
-        if (wasCommentEditTextActive && (now - lastTypedCommentTime) < 15_000L) return true
+        if (wasCommentComposerOpen && (now - lastCommentComposerOpenTime) < 45_000L) return true
+        if ((now - lastCommentClickTime) < 45_000L) return true
+        if (wasCommentEditTextActive && (now - lastTypedCommentTime) < 45_000L) return true
 
         return entries.any { e ->
             val v = e.viewId.lowercase()
@@ -3234,7 +3252,10 @@ class YouTubeLiveSearchService : AccessibilityService() {
             v.contains("comment_composer") ||
             d == "close comments" ||
             d == "close description" ||
-            d.startsWith("reply to ")
+            d.startsWith("reply to ") ||
+            d.contains("comment", ignoreCase = true) ||
+            v.contains("comment", ignoreCase = true) ||
+            v.contains("engagement", ignoreCase = true)
         }
     }
 
@@ -3520,6 +3541,19 @@ class YouTubeLiveSearchService : AccessibilityService() {
                 }
             }
 
+            val channelEntry = if (subscribeAnchor != null) {
+                entries.firstOrNull { e ->
+                    e != subscribeAnchor &&
+                    Math.abs(e.rect.top - subscribeAnchor.rect.top) <= (36 * density).toInt() &&
+                    (e.text.isNotBlank() || e.desc.isNotBlank()) &&
+                    !e.text.contains("subscribe", ignoreCase = true) &&
+                    !e.desc.contains("subscribe", ignoreCase = true) &&
+                    !e.desc.contains("bell", ignoreCase = true)
+                }
+            } else null
+            val onScreenChannel = channelEntry?.text?.ifBlank { channelEntry.desc }?.trim().takeIf { !it.isNullOrBlank() }
+            val activeChannel = onScreenChannel ?: mediaArtist
+
             if (cleanedTitleCandidates.isNotEmpty()) {
                 val isGenericTarget = targetTitle.equals("YouTube Video Task", ignoreCase = true) ||
                         targetTitle.equals("YouTube Video", ignoreCase = true) ||
@@ -3528,7 +3562,7 @@ class YouTubeLiveSearchService : AccessibilityService() {
                 // Check if ANY candidate on the active Watch screen matches our target video
                 val matchingCandidate = cleanedTitleCandidates.firstOrNull { candidate ->
                     isGenericTarget ||
-                            TitleMatcher.evaluateMatch(candidate, targetTitle, null, targetAuthor) == com.example.data.MatchResult.MATCH
+                            TitleMatcher.evaluateMatch(candidate, targetTitle, activeChannel, targetAuthor) == com.example.data.MatchResult.MATCH
                 }
 
                 if (matchingCandidate != null) {
@@ -3537,29 +3571,33 @@ class YouTubeLiveSearchService : AccessibilityService() {
                     }
                     wrongVideoStrikeCount = 0
                 } else {
-                    // Check if there is an explicit mismatched title candidate on the active screen
-                    val mismatchCandidate = cleanedTitleCandidates.firstOrNull { candidate ->
-                        TitleMatcher.evaluateMatch(candidate, targetTitle, null, targetAuthor) == com.example.data.MatchResult.MISMATCH
-                    }
+                    val isAnyCommentOrTypingActive = isCommentActive ||
+                            isSoftKeyboardVisible() ||
+                            (now - lastCommentComposerOpenTime) < 45_000L ||
+                            (now - lastCommentClickTime) < 45_000L ||
+                            (now - lastTypedCommentTime) < 45_000L
 
-                    if (mismatchCandidate != null) {
+                    if (isAnyCommentOrTypingActive) {
+                        // User is viewing, typing, or sending comments on the target video: NEVER treat as video change!
                         wrongVideoStrikeCount = 0
-                        WatchSessionRepository.triggerTaskIncomplete(
-                            "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$mismatchCandidate\") play kar diya."
-                        )
-                        return
-                    } else if (!isCommentActive && !isSoftKeyboardVisible()) {
-                        wrongVideoStrikeCount++
-                        if (wrongVideoStrikeCount >= 2) {
-                            val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
-                            wrongVideoStrikeCount = 0
-                            WatchSessionRepository.triggerTaskIncomplete(
-                                "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya."
-                            )
-                            return
-                        }
                     } else {
-                        wrongVideoStrikeCount = 0
+                        // Check if there is an explicit mismatched title candidate on the active screen
+                        val mismatchCandidate = cleanedTitleCandidates.firstOrNull { candidate ->
+                            TitleMatcher.evaluateMatch(candidate, targetTitle, activeChannel, targetAuthor) == com.example.data.MatchResult.MISMATCH
+                        }
+
+                        if (mismatchCandidate != null) {
+                            wrongVideoStrikeCount++
+                            if (wrongVideoStrikeCount >= 2) {
+                                wrongVideoStrikeCount = 0
+                                WatchSessionRepository.triggerTaskIncomplete(
+                                    "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$mismatchCandidate\") play kar diya."
+                                )
+                                return
+                            }
+                        } else {
+                            wrongVideoStrikeCount = 0
+                        }
                     }
                 }
             }
