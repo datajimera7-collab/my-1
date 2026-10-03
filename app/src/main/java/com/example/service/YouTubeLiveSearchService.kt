@@ -3017,23 +3017,13 @@ class YouTubeLiveSearchService : AccessibilityService() {
             return
         }
 
-        // Only treat as a candidate video switch if it explicitly looks like a video item card
-        val isExplicitVideoCard = cardViewId.contains("video_lockup") ||
-                cardViewId.contains("compact_video") ||
-                cardViewId.contains("video_card") ||
-                cardViewId.contains("rich_item") ||
-                cardViewId.contains("grid_video") ||
-                (lowerCard.contains("views") && (lowerCard.contains("ago") || lowerCard.contains("watching") || lowerCard.contains("live")))
-
-        if (!isExplicitVideoCard) {
-            return
-        }
-
         val cleanClickedTitle = extractCleanTitleCandidate(cardText)
         if (cleanClickedTitle.length >= 5 &&
             !CHROME_LABELS.contains(cleanClickedTitle.lowercase()) &&
             !cleanClickedTitle.contains("like", ignoreCase = true) &&
-            !cleanClickedTitle.contains("comment", ignoreCase = true)
+            !cleanClickedTitle.contains("comment", ignoreCase = true) &&
+            !cleanClickedTitle.contains("subscribe", ignoreCase = true) &&
+            !cleanClickedTitle.contains("share", ignoreCase = true)
         ) {
             val match = TitleMatcher.evaluateMatch(
                 playingTitle = cleanClickedTitle,
@@ -3046,6 +3036,7 @@ class YouTubeLiveSearchService : AccessibilityService() {
                 WatchSessionRepository.triggerTaskIncomplete(
                     "Task Incomplete! Aapne YouTube mein target video (\"$targetTitle\") ke bajaye doosra video (\"$cleanClickedTitle\") play kar diya."
                 )
+                return
             }
         }
     }
@@ -3451,8 +3442,17 @@ class YouTubeLiveSearchService : AccessibilityService() {
             }
 
             // 4. Check Watch Metadata Header (below 16:9 video player)
+            val subscribeAnchor = entries.firstOrNull { e ->
+                val t = e.text.lowercase()
+                val d = e.desc.lowercase()
+                val v = e.viewId.lowercase()
+                e.rect.top in (playerBottomY - (8 * density).toInt())..(playerBottomY + (220 * density).toInt()) && (
+                    t.contains("subscribe") || d.contains("subscribe") || v.contains("subscribe") ||
+                    t.contains("सदस्यता") || d.contains("सदस्यता")
+                )
+            }
             val headerTopY = (playerBottomY - (16 * density).toInt()).coerceAtLeast((screenHeight * 0.15f).toInt())
-            val headerBottomY = (screenHeight * 0.75f).toInt()
+            val headerBottomY = (subscribeAnchor?.rect?.top ?: (playerBottomY + (160 * density).toInt())).coerceAtMost((screenHeight * 0.55f).toInt())
 
             val sortedHeaderEntries = entries
                 .filter { e ->
@@ -3535,24 +3535,17 @@ class YouTubeLiveSearchService : AccessibilityService() {
                         lockedWatchPageTitle = matchingCandidate
                     }
                     wrongVideoStrikeCount = 0
-                } else {
-                    val mediaTitle = WatchSessionRepository.currentMediaTitle.value
-                    val mediaAuthor = WatchSessionRepository.currentMediaArtist.value
-                    val mediaIsConfirmedTarget = !mediaTitle.isNullOrBlank() &&
-                            TitleMatcher.evaluateMatch(mediaTitle, targetTitle, mediaAuthor, targetAuthor) == com.example.data.MatchResult.MATCH
-
-                    if (!isCommentActive && !isSoftKeyboardVisible() && !mediaIsConfirmedTarget) {
-                        wrongVideoStrikeCount++
-                        if (wrongVideoStrikeCount >= 4) {
-                            val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
-                            wrongVideoStrikeCount = 0
-                            WatchSessionRepository.triggerTaskIncomplete(
-                                "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya."
-                            )
-                        }
-                    } else {
+                } else if (!isCommentActive && !isSoftKeyboardVisible()) {
+                    wrongVideoStrikeCount++
+                    if (wrongVideoStrikeCount >= 2) {
+                        val detectedWrong = cleanedTitleCandidates.first().ifBlank { "Doosra video" }
                         wrongVideoStrikeCount = 0
+                        WatchSessionRepository.triggerTaskIncomplete(
+                            "Task Incomplete! Aapne YouTube par target video (\"$targetTitle\") ke bajaye doosra video (\"$detectedWrong\") play kar diya."
+                        )
                     }
+                } else {
+                    wrongVideoStrikeCount = 0
                 }
             }
         } catch (_: Exception) {}
